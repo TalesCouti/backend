@@ -3,34 +3,35 @@ const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
-const port = process.env.PORT || 3000;
-const dotenv = require('dotenv'); 
+const dotenv = require('dotenv'); // Carregar as variáveis de ambiente
+
+dotenv.config(); // Carregar o arquivo .env
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000; // Usar a variável de ambiente PORT
+
 app.use(express.json());
 
 app.get('/', (req, res) => {
   res.send('API funcionando!');
 });
 
-app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+// Agora a variável 'port' está correta
+app.listen(port, () => {
+  console.log(`Servidor rodando na porta ${port}`);
 });
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.DATABASE_URL, // Conectar com o banco de dados usando a variável de ambiente
   ssl: {
     rejectUnauthorized: false
   }
 });
 
-
 app.use(cors());
 app.use(express.json());
 
-
-const SECRET = process.env.JWT_SECRET;
+const SECRET = process.env.JWT_SECRET; // A chave secreta do JWT
 
 app.post('/login', async (req, res) => {
   const { cpf, password } = req.body;
@@ -41,14 +42,12 @@ app.post('/login', async (req, res) => {
 
     if (!user) {
       return res.status(400).json('CPF ou senha inválidos.');
-
     }
 
     const senhaCorreta = await bcrypt.compare(password, user.senha);
 
     if (!senhaCorreta) {
       return res.status(400).json('CPF ou senha inválidos.');
-
     }
 
     const token = jwt.sign({ id: user.id, nome: user.nome }, SECRET, { expiresIn: '1h' });
@@ -59,7 +58,6 @@ app.post('/login', async (req, res) => {
     res.status(500).json('Erro interno do servidor.');
   }
 });
-
 
 // Nova rota de cadastro
 app.post('/cadastro', async (req, res) => {
