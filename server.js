@@ -11,15 +11,7 @@ const app = express();
 const port = process.env.PORT || 3000; // Usar a variável de ambiente PORT
 
 app.use(express.json());
-
-app.get('/', (req, res) => {
-  res.send('API funcionando!');
-});
-
-// Agora a variável 'port' está correta
-app.listen(port, () => {
-  console.log(`Servidor rodando na porta ${port}`);
-});
+app.use(cors()); // Permitir requisições de outros domínios
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL, // Conectar com o banco de dados usando a variável de ambiente
@@ -28,11 +20,14 @@ const pool = new Pool({
   }
 });
 
-app.use(cors());
-app.use(express.json());
-
 const SECRET = process.env.JWT_SECRET; // A chave secreta do JWT
 
+// Teste para verificar se a API está funcionando
+app.get('/', (req, res) => {
+  res.send('API funcionando!');
+});
+
+// Login de usuário
 app.post('/login', async (req, res) => {
   const { cpf, password } = req.body;
 
@@ -59,21 +54,21 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Nova rota de cadastro
+// Cadastro de novo usuário
 app.post('/cadastro', async (req, res) => {
   const { nome, cpf, senha, email, telefone, dataNascimento, endereco } = req.body;
 
   try {
-    // Verificar se CPF já existe
+    // Verificar se o CPF já existe no banco de dados
     const cpfExistente = await pool.query('SELECT id FROM usuarios WHERE cpf = $1', [cpf]);
     if (cpfExistente.rows.length > 0) {
       return res.status(400).json('CPF já cadastrado.');
     }
 
-    // Criptografar a senha
+    // Criptografar a senha do usuário
     const hashedPassword = await bcrypt.hash(senha, 10);
 
-    // Inserir no usuários (cpf + senha)
+    // Inserir o usuário na tabela de 'usuarios' (apenas CPF e senha)
     const usuarioResult = await pool.query(
       'INSERT INTO usuarios (cpf, senha) VALUES ($1, $2) RETURNING id',
       [cpf, hashedPassword]
@@ -81,9 +76,9 @@ app.post('/cadastro', async (req, res) => {
 
     const usuarioId = usuarioResult.rows[0].id;
 
-    // Inserir nas informações do usuário (ligado ao id do usuário)
+    // Inserir as informações adicionais (nome, email, telefone, etc.) na tabela 'informacoes_usuario'
     await pool.query(
-      'INSERT INTO informacoes_usuario (id, nome, data_nascimento, endereco, telefone, email) VALUES ($1, $2, $3, $4, $5, $6)',
+      'INSERT INTO informacoes_usuario (usuario_id, nome, data_nascimento, endereco, telefone, email) VALUES ($1, $2, $3, $4, $5, $6)',
       [usuarioId, nome, dataNascimento, endereco, telefone, email]
     );
 
@@ -92,4 +87,9 @@ app.post('/cadastro', async (req, res) => {
     console.error('Erro no cadastro:', error);
     res.status(500).json('Erro interno no servidor.');
   }
+});
+
+// Inicializando o servidor
+app.listen(port, () => {
+  console.log(`Servidor rodando na porta ${port}`);
 });
