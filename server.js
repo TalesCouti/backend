@@ -56,7 +56,7 @@ app.post('/login', async (req, res) => {
 
 // Cadastro de novo usuário
 app.post('/cadastro', async (req, res) => {
-  const { nome, cpf, senha, email, telefone, dataNascimento} = req.body;
+  const { nome, cpf, senha, email, telefone, dataNascimento } = req.body;
 
   try {
     // Verificar se o CPF já existe no banco de dados
