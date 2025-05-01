@@ -76,7 +76,7 @@ app.post('/cadastro', async (req, res) => {
 
     const usuarioId = usuarioResult.rows[0].id;
 
-    // Inserir as informações adicionais (nome, email, telefone, etc.) na tabela 'informacoes_usuario'
+    
     await pool.query(
       'INSERT INTO informacoes_usuario (usuario_id, nome, data_nascimento, endereco, telefone, email) VALUES ($1, $2, $3, $4, $5, $6)',
       [usuarioId, nome, dataNascimento, endereco, telefone, email]
