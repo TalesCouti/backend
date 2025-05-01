@@ -56,7 +56,7 @@ app.post('/login', async (req, res) => {
 
 // Cadastro de novo usuário
 app.post('/cadastro', async (req, res) => {
-  const { nome, cpf, senha, email, telefone, dataNascimento, endereco } = req.body;
+  const { nome, cpf, senha, email, telefone, dataNascimento} = req.body;
 
   try {
     // Verificar se o CPF já existe no banco de dados
@@ -78,8 +78,8 @@ app.post('/cadastro', async (req, res) => {
 
     
     await pool.query(
-      'INSERT INTO informacoes_usuario (usuario_id, nome, data_nascimento, endereco, telefone, email) VALUES ($1, $2, $3, $4, $5, $6)',
-      [usuarioId, nome, dataNascimento, endereco, telefone, email]
+      'INSERT INTO informacoes_usuario (usuario_id, nome, data_nascimento, telefone, email) VALUES ($1, $2, $3, $4, $5, $6)',
+      [usuarioId, nome, dataNascimento, telefone, email]
     );
 
     res.status(201).json('Usuário cadastrado com sucesso.');
