@@ -4,7 +4,41 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
 const dotenv = require('dotenv'); // Carregar as variáveis de ambiente
+// Rota para obter informações do usuário
+app.get('/usuario', async (req, res) => {
+  try {
+    // Verificar token
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'Token não fornecido' });
+    }
 
+    // Verificar token e decodificar
+    const decoded = jwt.verify(token, SECRET);
+    
+    // Buscar informações do usuário
+    const usuarioInfo = await pool.query(`
+      SELECT i.nome 
+      FROM informacoes_usuario i
+      JOIN usuarios u ON i.usuario_id = u.id
+      WHERE u.id = $1
+    `, [decoded.id]);
+
+    if (usuarioInfo.rows.length === 0) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+
+    res.json({ 
+      nome: usuarioInfo.rows[0].nome 
+    });
+  } catch (error) {
+    console.error('Erro ao buscar usuário:', error);
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: 'Token inválido' });
+    }
+    res.status(500).json({ message: 'Erro ao buscar informações do usuário' });
+  }
+});
 dotenv.config(); // Carregar o arquivo .env
 
 const app = express();
