@@ -3,9 +3,20 @@ const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
+const port = process.env.PORT || 3000;
+const dotenv = require('dotenv'); 
 
 const app = express();
 const port = 3000;
+app.use(express.json());
+
+app.get('/', (req, res) => {
+  res.send('API funcionando!');
+});
+
+app.listen(PORT, () => {
+  console.log(`Servidor rodando na porta ${PORT}`);
+});
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
