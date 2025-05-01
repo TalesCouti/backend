@@ -78,8 +78,8 @@ app.post('/cadastro', async (req, res) => {
 
     
     await pool.query(
-      'INSERT INTO informacoes_usuario (usuario_id, nome, data_nascimento, telefone, email) VALUES ($1, $2, $3, $4, $5, $6)',
-      [usuarioId, nome, dataNascimento, telefone, email]
+      'INSERT INTO informacoes_usuario (nome, data_nascimento, telefone, email, usuario_id) VALUES ($1, $2, $3, $4, $5)',
+      [nome, dataNascimento, telefone, email, usuarioId]
     );
 
     res.status(201).json('Usuário cadastrado com sucesso.');
