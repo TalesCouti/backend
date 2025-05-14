@@ -1,0 +1,75 @@
+const pool = require('../db/pool');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
+const SECRET = process.env.JWT_SECRET;
+
+exports.login = async (req, res) => {
+  const { cpf, password } = req.body;
+
+  try {
+    const queryResult = await pool.query('SELECT * FROM usuario WHERE cpf = $1', [cpf]);
+    const user = queryResult.rows[0];
+
+    if (!user || !(await bcrypt.compare(password, user.senha))) {
+      return res.status(400).json('CPF ou senha inválidos.');
+    }
+
+    const token = jwt.sign({ id: user.id }, SECRET, { expiresIn: '1h' });
+
+    res.json({ token });
+  } catch (error) {
+    console.error('Erro no login:', error);
+    res.status(500).json('Erro interno do servidor.');
+  }
+};
+
+exports.cadastro = async (req, res) => {
+  const { nome, cpf, senha, email, telefone, dataNascimento } = req.body;
+
+  try {
+    const cpfExistente = await pool.query('SELECT id FROM usuario WHERE cpf = $1', [cpf]);
+    if (cpfExistente.rows.length > 0) return res.status(400).json('CPF já cadastrado.');
+
+    const hashedPassword = await bcrypt.hash(senha, 10);
+
+    const usuarioResult = await pool.query(
+      'INSERT INTO usuario (cpf, senha) VALUES ($1, $2) RETURNING id',
+      [cpf, hashedPassword]
+    );
+
+    const usuarioId = usuarioResult.rows[0].id;
+
+    await pool.query(
+      'INSERT INTO informacoes_usuario (nome, data_nascimento, telefone, email, usuario_id) VALUES ($1, $2, $3, $4, $5)',
+      [nome, dataNascimento, telefone, email, usuarioId]
+    );
+
+    res.status(201).json('Usuário cadastrado com sucesso.');
+  } catch (error) {
+    console.error('Erro no cadastro:', error);
+    res.status(500).json('Erro interno no servidor.');
+  }
+};
+
+exports.getUsuario = async (req, res) => {
+  const { id } = req.user;
+
+  try {
+    const usuarioInfo = await pool.query(`
+      SELECT i.nome 
+      FROM informacoes_usuario i
+      JOIN usuario u ON i.usuario_id = u.id
+      WHERE u.id = $1
+    `, [id]);
+
+    if (usuarioInfo.rows.length === 0) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+
+    res.json({ nome: usuarioInfo.rows[0].nome });
+  } catch (error) {
+    console.error('Erro ao buscar usuário:', error);
+    res.status(500).json({ message: 'Erro ao buscar informações do usuário' });
+  }
+};
