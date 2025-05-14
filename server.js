@@ -39,7 +39,7 @@ app.get('/usuario', async (req, res) => {
     const usuarioInfo = await pool.query(`
       SELECT i.nome 
       FROM informacoes_usuario i
-      JOIN usuarios u ON i.usuario_id = u.id
+      JOIN usuario u ON i.usuario_id = u.id
       WHERE u.id = $1
     `, [decoded.id]);
 
@@ -91,7 +91,7 @@ app.post('/cadastro', async (req, res) => {
 
   try {
     // Verificar se o CPF já existe no banco de dados
-    const cpfExistente = await pool.query('SELECT id FROM usuarios WHERE cpf = $1', [cpf]);
+    const cpfExistente = await pool.query('SELECT id FROM usuario WHERE cpf = $1', [cpf]);
     if (cpfExistente.rows.length > 0) {
       return res.status(400).json('CPF já cadastrado.');
     }
@@ -102,7 +102,7 @@ app.post('/cadastro', async (req, res) => {
 
     // Inserir o usuário na tabela de 'usuarios' (apenas CPF e senha)
     const usuarioResult = await pool.query(
-      'INSERT INTO usuarios (cpf, senha) VALUES ($1, $2) RETURNING id',
+      'INSERT INTO usuario (cpf, senha) VALUES ($1, $2) RETURNING id',
       [cpf, hashedPassword]
     );
 
