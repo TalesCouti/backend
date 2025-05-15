@@ -9,7 +9,7 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-app.use('/usuario', require('.src/routes/usuario'));
+app.use('/usuario', require('./routes/usuario'));
 
 app.get('/', (req, res) => res.send('API funcionando!'));
 
