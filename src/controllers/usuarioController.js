@@ -41,12 +41,12 @@ exports.cadastro = async (req, res) => {
     const usuarioId = usuarioResult.rows[0].id;
 
     await pool.query(
-      'INSERT INTO informacoes_usuario (usuario_id,nome,email, telefone,data_nascimento, usuario_id) VALUES ($1, $2, $3, $4, $5)',
+      'INSERT INTO informacoes_usuario (usuario_id,nome,email, telefone,data_nascimento) VALUES ($1, $2, $3, $4, $5)',
       [usuarioId,nome,email,telefone,dataNascimento]
     );
     await pool.query(
-      'INSERT INTO endereco_usuario (cep,estado, cidade, bairro, logradouro,numero,complemento) VALUES ($1, $2, $3, $4, $5,$6,$7)',
-      [cep,estado, cidade, bairro, logradouro,numero,complemento]
+      'INSERT INTO endereco_usuario (usuario_id,cep,estado, cidade, bairro, logradouro,numero,complemento) VALUES ($1, $2, $3, $4, $5,$6,$7)',
+      [usuarioId,cep,estado, cidade, bairro, logradouro,numero,complemento]
     );
 
     res.status(201).json('Usuário cadastrado com sucesso.');
