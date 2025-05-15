@@ -25,7 +25,7 @@ exports.login = async (req, res) => {
 };
 
 exports.cadastro = async (req, res) => {
-  const { nome, cpf, senha, email, telefone, dataNascimento } = req.body;
+  const { nome, cpf, senha, email, telefone, dataNascimento,cep,estado,cidade,bairro,logradouro,numero,complemento } = req.body;
 
   try {
     const cpfExistente = await pool.query('SELECT id FROM usuario WHERE cpf = $1', [cpf]);
@@ -43,6 +43,10 @@ exports.cadastro = async (req, res) => {
     await pool.query(
       'INSERT INTO informacoes_usuario (nome, data_nascimento, telefone, email, usuario_id) VALUES ($1, $2, $3, $4, $5)',
       [nome, dataNascimento, telefone, email, usuarioId]
+    );
+    await pool.query(
+      'INSERT INTO endereco_usuario (cep,estado, cidade, bairro, logradouro,numero,complemento) VALUES ($1, $2, $3, $4, $5,$6,$7)',
+      [cep,estado, cidade, bairro, logradouro,numero,complemento]
     );
 
     res.status(201).json('Usuário cadastrado com sucesso.');
