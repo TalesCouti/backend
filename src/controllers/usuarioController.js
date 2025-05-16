@@ -45,7 +45,7 @@ exports.cadastro = async (req, res) => {
       [usuarioId,nome,email,telefone,dataNascimento]
     );
     await pool.query(
-      'INSERT INTO endereco_usuario (usuario_id,cep,estado, cidade, bairro, logradouro,numero,complemento) VALUES ($1, $2, $3, $4, $5,$6,$7)',
+      'INSERT INTO endereco_usuario (usuario_id,cep,estado, cidade, bairro, logradouro,numero,complemento) VALUES ($1, $2, $3, $4, $5,$6,$7,$8)',
       [usuarioId,cep,estado, cidade, bairro, logradouro,numero,complemento]
     );
 
