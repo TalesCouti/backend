@@ -13,7 +13,7 @@ app.use(express.json());
 app.use('/usuario', require('./routes/usuario'));
 app.use('/medico', require('./routes/medico'));
 app.use('/consulta', require('./routes/consulta'));
-app.use('/teste', require('./routes/teste')); // ✅ importa o arquivo acima
+app.use('/teste', require('./routes/teste'));
 
 app.get('/', (req, res) => res.send('API funcionando!'));
 
