@@ -9,7 +9,11 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// Suas rotas
 app.use('/usuario', require('./routes/usuario'));
+app.use('/medico', require('./routes/medico'));
+app.use('/consulta', require('./routes/consulta'));
+app.use('/teste', require('./routes/teste')); // ✅ importa o arquivo acima
 
 app.get('/', (req, res) => res.send('API funcionando!'));
 

@@ -1,10 +1,5 @@
-const pool = require('../db/pool');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-
-
-exports.getConsulta async (req, res) => {
-    const { id } = req.user
+exports.getConsulta = async (req, res) => {
+  const { id } = req.user;
   try {
     const consultaInfo = await pool.query(`
       SELECT 
@@ -30,3 +25,4 @@ exports.getConsulta async (req, res) => {
     res.status(500).json({ message: 'Erro interno do servidor' });
   }
 };
+
