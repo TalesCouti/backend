@@ -5,13 +5,13 @@ const jwt = require('jsonwebtoken');
 const SECRET = process.env.JWT_SECRET;
 
 exports.login = async (req, res) => {
-  const { cpf, password } = req.body;
+  const { cpf, senha } = req.body;
 
   try {
     const queryResult = await pool.query('SELECT * FROM usuario WHERE cpf = $1', [cpf]);
     const user = queryResult.rows[0];
 
-    if (!user || !(await bcrypt.compare(password, user.senha))) {
+    if (!user || !(await bcrypt.compare(senha, user.senha))) {
       return res.status(400).json('CPF ou senha inválidos.');
     }
 
