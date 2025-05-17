@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { getConsulta, inserirConsulta } = require('../controllers/consultaController');
-const auth = require('../middlewares/auth'); 
+const authMiddleware = require('../middleware/auth');
 
-router.get('/', auth, getConsulta);
-router.post('/', auth, inserirConsulta);
+router.get('/', authMiddleware, getConsulta);
+router.post('/', authMiddleware, inserirConsulta);
 
 module.exports = router;
