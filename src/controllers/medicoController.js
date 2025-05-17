@@ -14,23 +14,23 @@ exports.cadastrarMedico = async (req, res) => {
   } = req.body;
 
   try {
-    // Verifica se CRM já existe
+   
     const crmExistente = await pool.query('SELECT id FROM medico WHERE crm = $1', [crm]);
     if (crmExistente.rows.length > 0) {
       return res.status(400).json('CRM já cadastrado.');
     }
 
-    // Hash da senha
+   
     const hashedPassword = await bcrypt.hash(senha, 10);
 
-    // Insere médico
+    
     const medicoResult = await pool.query(
       'INSERT INTO medico (crm, senha) VALUES ($1, $2) RETURNING id',
       [crm, hashedPassword]
     );
     const medicoId = medicoResult.rows[0].id;
 
-    // Insere informações do médico
+    
     await pool.query(
       `INSERT INTO informacoes_medico
         (medico_id, nome, email, telefone, data_nascimento, especialidade, imagem_perfil)

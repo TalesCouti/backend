@@ -1,4 +1,4 @@
-const pool = require('../db/pool'); // ou ajuste conforme o caminho do seu projeto
+const pool = require('../db/pool'); 
 
 exports.getConsulta = async (req, res) => {
   const { id } = req.user;
