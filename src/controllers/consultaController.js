@@ -1,51 +1,104 @@
-const pool = require('../db/pool'); 
+const pool = require('../db/pool');
 
 exports.getConsulta = async (req, res) => {
-  const { id } = req.user;
   try {
-    const getConsulta = await pool.query(`
+    // 1. Verificação mais robusta do usuário
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false,
+        message: 'Token inválido ou usuário não identificado'
+      });
+    }
+
+
+    const result = await pool.query(`
       SELECT 
+        c.id,
         im.nome,
         im.especialidade,
         im.imagem_perfil,
         c.status,
-        c.data_hora
-      FROM 
-        consulta c
-      JOIN 
-        informacoes_medico im ON c.id_medico = im.id
-      WHERE 
-        c.id_usuario = $1
-    `, [id]);
+        c.data_hora,
+      FROM consulta c
+      JOIN informacoes_medico im ON c.id_medico = im.id
+      WHERE c.id_usuario = $1
+      ORDER BY c.data_hora DESC
+    `, [userId]);
 
-    if (getConsulta.rows.length === 0) {
-      return res.status(404).json({ message: 'Nenhuma consulta encontrada' });
-    }
+    // 3. Retorno padronizado
+    res.status(200).json({
+      success: true,
+      data: result.rows,
+      count: result.rowCount
+    });
 
-    res.status(200).json(getConsulta.rows);
   } catch (error) {
-    console.error('Erro ao buscar consultas:', error);
-    res.status(500).json({ message: 'Erro interno do servidor' });
+    // 4. Log detalhado
+    console.error('Erro em getConsulta:', {
+      user: req.user?.id,
+      error: error.message,
+      stack: error.stack
+    });
+
+    // 5. Resposta de erro aprimorada
+    res.status(500).json({
+      success: false,
+      message: 'Falha ao buscar consultas',
+      errorCode: 'DB_QUERY_ERROR'
+    });
   }
 };
 
 exports.inserirConsulta = async (req, res) => {
-  const { id } = req.user;
-  const { id_medico, data_hora, status } = req.body;
-
-  if (!id_medico || !data_hora || !status) {
-    return res.status(400).json({ message: 'Campos obrigatórios: id_medico, data_hora, status' });
-  }
-
   try {
-    await pool.query(`
-      INSERT INTO consulta (id_usuario, id_medico, data_hora, status)
-      VALUES ($1, $2, $3, $4)
-    `, [id, id_medico, data_hora, status]);
 
-    res.status(201).json({ message: 'Consulta inserida com sucesso' });
+    const requiredFields = ['id_medico', 'data_hora', 'status'];
+    const missingFields = requiredFields.filter(field => !req.body[field]);
+    
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Campos obrigatórios faltando',
+        missingFields
+      });
+    }
+
+    
+    const result = await pool.query(`
+      INSERT INTO consulta (id_usuario, id_medico, data_hora, status, valor)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *
+    `, [
+      req.user.id,
+      req.body.id_medico,
+      req.body.data_hora,
+      req.body.status,
+      req.body.valor || 300.00
+    ]);
+
+  
+    res.status(201).json({
+      success: true,
+      data: result.rows[0],
+      message: 'Consulta agendada com sucesso'
+    });
+
   } catch (error) {
-    console.error('Erro ao inserir consulta:', error);
-    res.status(500).json({ message: 'Erro interno do servidor' });
+    console.error('Erro em inserirConsulta:', error);
+
+    if (error.code === '23503') { 
+      return res.status(400).json({
+        success: false,
+        message: 'Médico não encontrado',
+        errorCode: 'DOCTOR_NOT_FOUND'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Falha ao agendar consulta',
+      errorCode: 'DB_INSERT_ERROR'
+    });
   }
 };
