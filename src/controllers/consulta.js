@@ -1,4 +1,4 @@
-const { pool } = require('../db/pools'); 
+const { pool } = require('../db/pool'); 
 
 async function inserirConsulta(req, res) {
   try {
