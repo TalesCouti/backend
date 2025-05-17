@@ -1,24 +1,28 @@
-const pool = require('../db/pool');
-
-
-async function inserirConsulta(req, res) {
+exports.getConsulta = async (req, res) => {
+  const { id } = req.user;
   try {
-    const usuario_id = '044be79d-7a7f-4585-937e-08b54a75289e';
-    const medico_id = '60ed2a68-0b85-4b2a-bb4e-354d28a6d031';
-    const status = 'realizada';
-    const data_hora = '2025-05-03 10:00:00';
+    const consulta = await pool.query(`
+      SELECT 
+        im.nome,
+        im.especialidade,
+        im.imagem_perfil,
+        c.status,
+        c.data_hora
+      FROM 
+        consulta c
+      JOIN 
+        informacoes_medico im ON c.id_medico = im.id
+      WHERE 
+        c.id_usuario = $1
+    `, [id]);
 
-    await pool.query(
-      `INSERT INTO consulta (usuario_id, medico_id, status, data_hora) 
-       VALUES ($1, $2, $3, $4)`,
-      [usuario_id, medico_id, status, data_hora]
-    );
+    if (consulta.rows.length === 0) {
+      return res.status(404).json({ message: 'Nenhuma consulta encontrada' });
+    }
 
-    res.send('Consulta inserida com sucesso.');
-  } catch (err) {
-    console.error('Erro no controller:', err);
-    res.status(500).send('Erro ao inserir consulta.');
+    res.status(200).json(consulta.rows);
+  } catch (error) {
+    console.error('Erro ao buscar consultas:', error);
+    res.status(500).json({ message: 'Erro interno do servidor' });
   }
-}
-
-module.exports = { inserirConsulta };
+};
