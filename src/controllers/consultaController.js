@@ -8,7 +8,7 @@ async function inserirConsulta(req, res) {
     const data_hora = '2025-05-03 10:00:00';
 
     await pool.query(
-      `INSERT INTO informacoes_consulta (usuario_id, medico_id, status, data_hora) 
+      `INSERT INTO consulta (usuario_id, medico_id, status, data_hora) 
        VALUES ($1, $2, $3, $4)`,
       [usuario_id, medico_id, status, data_hora]
     );
