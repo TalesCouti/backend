@@ -1,10 +1,11 @@
 exports.getConsulta = async (req, res) => {
   const { id } = req.user;
   try {
-    const consultaInfo = await pool.query(`
+    const consulta = await pool.query(`
       SELECT 
         im.nome,
         im.especialidade,
+        im.imagem_perfil,
         c.status,
         c.data_hora
       FROM 
@@ -15,11 +16,11 @@ exports.getConsulta = async (req, res) => {
         c.id_usuario = $1
     `, [id]);
 
-    if (consultaInfo.rows.length === 0) {
+    if (consulta.rows.length === 0) {
       return res.status(404).json({ message: 'Nenhuma consulta encontrada' });
     }
 
-    res.status(200).json(consultaInfo.rows);
+    res.status(200).json(consulta.rows);
   } catch (error) {
     console.error('Erro ao buscar consultas:', error);
     res.status(500).json({ message: 'Erro interno do servidor' });
