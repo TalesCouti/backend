@@ -19,9 +19,10 @@ exports.getConsulta = async (req, res) => {
         im.especialidade,
         im.imagem_perfil,
         c.status,
+        c.valor,
         c.data_hora
       FROM consulta c
-      JOIN informacoes_medico im ON c.medioco_id = im.id
+      JOIN informacoes_medico im ON c.medico_id = im.id
       WHERE c.usuario_id = $1
       ORDER BY c.data_hora DESC
     `, [userId]);
@@ -70,7 +71,7 @@ exports.inserirConsulta = async (req, res) => {
       RETURNING *
     `, [
       req.user.id,
-      req.body.id_medico,
+      req.body.medico_id,
       req.body.data_hora,
       req.body.status,
       req.body.valor || 300.00
