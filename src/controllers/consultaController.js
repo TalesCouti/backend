@@ -2,7 +2,7 @@ const pool = require('../db/pool');
 
 exports.getConsulta = async (req, res) => {
   try {
-    // 1. Verificação mais robusta do usuário
+   
     const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ 
@@ -26,7 +26,6 @@ exports.getConsulta = async (req, res) => {
       ORDER BY c.data_hora DESC
     `, [userId]);
 
-    // 3. Retorno padronizado
     res.status(200).json({
       success: true,
       data: result.rows,
@@ -34,14 +33,14 @@ exports.getConsulta = async (req, res) => {
     });
 
   } catch (error) {
-    // 4. Log detalhado
+   
     console.error('Erro em getConsulta:', {
       user: req.user?.id,
       error: error.message,
       stack: error.stack
     });
 
-    // 5. Resposta de erro aprimorada
+    
     res.status(500).json({
       success: false,
       message: 'Falha ao buscar consultas',

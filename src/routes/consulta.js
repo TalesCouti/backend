@@ -3,7 +3,7 @@ const router = express.Router();
 const { getConsulta, inserirConsulta } = require('../controllers/consultaController');
 const auth = require('../middleware/auth');
 
-router.get('/consulta', auth, getConsulta);
+router.get('/', auth, getConsulta);
 router.post('/consulta', auth, inserirConsulta);
 
 
