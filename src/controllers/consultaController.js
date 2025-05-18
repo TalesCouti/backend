@@ -22,7 +22,7 @@ exports.getConsulta = async (req, res) => {
         c.valor,
         c.data_hora
       FROM consulta c
-      JOIN informacoes_medico im ON c.medico_id = im.id
+      JOIN informacoes_medico im ON c.medico_id = im.medico_id
       WHERE c.usuario_id = $1
       ORDER BY c.data_hora DESC
     `, [userId]);
