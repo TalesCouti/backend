@@ -19,7 +19,7 @@ exports.getConsulta = async (req, res) => {
         im.especialidade,
         im.imagem_perfil,
         c.status,
-        c.data_hora,
+        c.data_hora
       FROM consulta c
       JOIN informacoes_medico im ON c.id_medico = im.id
       WHERE c.id_usuario = $1
