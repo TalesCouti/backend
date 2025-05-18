@@ -27,11 +27,7 @@ exports.getConsulta = async (req, res) => {
       ORDER BY c.data_hora DESC
     `, [userId]);
 
-    res.status(200).json({
-      success: true,
-      data: result.rows,
-      count: result.rowCount
-    });
+    res.status(200).json(result.rows);
 
   } catch (error) {
    
