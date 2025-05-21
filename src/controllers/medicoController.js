@@ -12,7 +12,7 @@ exports.login = async (req, res) => {
     const user = queryResult.rows[0];
 
     if (!user || !(await bcrypt.compare(senha, user.senha))) {
-      return res.status(400).json('CRM ou senha inválidos.');
+      return res.status(401).json('CRM ou senha inválidos.');
     }
 
     const token = jwt.sign({ id: user.id }, SECRET, { expiresIn: '1h' });
@@ -25,7 +25,7 @@ exports.login = async (req, res) => {
 };
 
 exports.cadastro = async (req, res) => {
-  const { nome, crm, senha, email, telefone, dataNascimento,cep,estado,cidade,bairro,logradouro,numero,complemento } = req.body;
+  const { nome, crm, senha, email, telefone, dataNascimento,especialidade,cep,estado,cidade,bairro,logradouro,numero,complemento } = req.body;
 
   try {
     const crmExistente = await pool.query('SELECT id FROM medico WHERE crm = $1', [crm]);
