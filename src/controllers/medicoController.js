@@ -41,8 +41,8 @@ exports.cadastro = async (req, res) => {
     const medicoId = medicoResult.rows[0].id;
 
     await pool.query(
-      'INSERT INTO informacoes_medico (medico_id,nome,email, telefone,data_nascimento) VALUES ($1, $2, $3, $4, $5)',
-      [medicoId,nome,email,telefone,dataNascimento]
+      'INSERT INTO informacoes_medico (medico_id,nome,email, telefone,data_nascimento,especialidade) VALUES ($1, $2, $3, $4, $5, $6)',
+      [medicoId,nome,email,telefone,dataNascimento,especialidade]
     );
     await pool.query(
       'INSERT INTO endereco_medico (medico_id,cep,estado, cidade, bairro, logradouro,numero,complemento) VALUES ($1, $2, $3, $4, $5,$6,$7,$8)',
