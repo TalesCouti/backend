@@ -3,7 +3,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const SECRET = process.env.JWT_SECRET;
-
 exports.login = async (req, res) => {
   const { crm, senha } = req.body;
 
