@@ -59,19 +59,21 @@ exports.cadastro = async (req, res) => {
 exports.getUsuario = async (req, res) => {
   const { id } = req.user;
 
-  try {
-    const medicoInfo = await pool.query(`
-      SELECT i.nome 
-      FROM informacoes_medico i
-      JOIN usuario u ON i.medico_id = u.id
+   try {
+    const usuarioInfo = await pool.query(`
+      SELECT i.nome, i.email, i.telefone, i.data_nascimento, i.imagem_perfil,
+             e.cep, e.estado, e.cidade, e.bairro, e.logradouro, e.numero, e.complemento
+      FROM informacoes_usuario i
+      JOIN usuario u ON i.usuario_id = u.id
+      JOIN endereco_usuario e ON e.usuario_id = u.id
       WHERE u.id = $1
     `, [id]);
 
-    if (medicoInfo.rows.length === 0) {
-      return res.status(404).json({ message: 'Médico não encontrado' });
+    if (usuarioInfo.rows.length === 0) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
     }
 
-    res.json({ nome: medicoInfo.rows[0].nome });
+    res.json(usuarioInfo.rows[0]);
   } catch (error) {
     console.error('Erro ao buscar usuário:', error);
     res.status(500).json({ message: 'Erro ao buscar informações do usuário' });
