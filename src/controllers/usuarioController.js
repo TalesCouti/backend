@@ -1,7 +1,8 @@
 const pool = require('../db/pool');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-
+const TOKEN_EXPIRY = process.env.TOKEN_EXPIRY || '1h';
+const SALT_ROUNDS = 10;
 const SECRET = process.env.JWT_SECRET;
 
 exports.login = async (req, res) => {
