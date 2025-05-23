@@ -87,7 +87,7 @@ exports.getMedico = async (req, res) => {
   try {
     const medicoInfo = await pool.query(`
       SELECT i.nome, i.email, i.telefone, i.data_nascimento, i.especialidade,
-             e.cep, e.estado, e.cidade, e.bairro, e.logradouro, e.numero, e.complemento
+             e.cep, e.estado, e.cidade, e.bairro, e.logradouro, e.numero, e.complemento, i.imagem_perfil
       FROM informacoes_medico i
       JOIN medico u ON i.medico_id = u.id
       JOIN endereco_medico e ON e.medico_id = u.id
@@ -103,4 +103,4 @@ exports.getMedico = async (req, res) => {
     console.error('Erro ao buscar médico:', error);
     res.status(500).json({ message: 'Erro ao buscar informações do médico' });
   }
-};
+}; 
