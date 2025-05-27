@@ -1,6 +1,6 @@
 const express = require('express');
+const axios = require('axios');
 const router = express.Router();
-const fetch = require('node-fetch');
 
 router.get('/hospitais', async (req, res) => {
   const { lat, lng } = req.query;
@@ -13,9 +13,8 @@ router.get('/hospitais', async (req, res) => {
   const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=3000&type=hospital&key=${key}`;
 
   try {
-    const response = await fetch(url);
-    const data = await response.json();
-    res.json(data.results || []);
+    const response = await axios.get(url);
+    res.json(response.data.results || []);
   } catch (err) {
     console.error('Erro ao consultar Google Maps:', err.message);
     res.status(500).json({ error: 'Erro ao buscar dados do Google Maps' });
