@@ -8,12 +8,10 @@ const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-
-
 app.use('/usuario', require('./routes/usuario'));
 app.use('/medico', require('./routes/medico'));
 app.use('/consulta', require('./routes/consulta'));
-app.use('/apiKey', require('./routes/apiKey'));
+app.use('/localizacao', require('./routes/localizacao'));
 app.get('/', (req, res) => res.send('API funcionando!'));
 
 app.listen(port, () => {
