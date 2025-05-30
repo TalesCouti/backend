@@ -24,6 +24,18 @@ exports.login = async (req, res) => {
   }
 };
 
+app.post("/loginNfc", async (req, res) => {
+  const { uid } = req.body;
+  const usuario = await db.query("SELECT * FROM usuario WHERE nfc_uid = $1", [uid]);
+  if (usuario.rows.length > 0) {
+    const user = usuario.rows[0];
+    const token = jwt.sign({ id: user.id }, SECRET, { expiresIn: '1h' });
+    res.json({ success: true, token });
+  } else {
+    res.json({ success: false, message: "UID não cadastrado" });
+  }
+});
+
 exports.cadastro = async (req, res) => {
   const { nome, cpf, senha, email, telefone, dataNascimento,cep,estado,cidade,bairro,logradouro,numero,complemento } = req.body;
 
@@ -55,6 +67,23 @@ exports.cadastro = async (req, res) => {
     res.status(500).json('Erro interno no servidor.');
   }
 };
+app.post('/usuario/cadastrar-nfc', async (req, res) => {
+  const { cpf, uid } = req.body;
+
+  try {
+    const result = await pool.query('UPDATE usuario SET nfc_uid = $1 WHERE cpf = $2 RETURNING *', [uid, cpf]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: 'Usuário não encontrado.' });
+    }
+
+    return res.json({ message: 'Pulseira cadastrada com sucesso!' });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: 'Erro ao cadastrar pulseira.' });
+  }
+});
+
 
 exports.getUsuario = async (req, res) => {
   const { id } = req.user;
