@@ -68,10 +68,11 @@ exports.cadastro = async (req, res) => {
   }
 };
 exports.cadastroNFC = async (req, res) => {
-  const { cpf, uid } = req.body;
+  const { uid } = req.body;
+  const userId = req.user.id;
 
   try {
-    const result = await pool.query('UPDATE usuario SET nfc_uid = $1 WHERE cpf = $2 RETURNING *', [uid, cpf]);
+    const result = await pool.query('UPDATE usuario SET nfc_uid = $1 WHERE id = $2 RETURNING *', [uid, userId]);
 
     if (result.rowCount === 0) {
       return res.status(404).json({ message: 'Usuário não encontrado.' });
@@ -83,6 +84,7 @@ exports.cadastroNFC = async (req, res) => {
     return res.status(500).json({ message: 'Erro ao cadastrar pulseira.' });
   }
 };
+
 
 
 exports.getUsuario = async (req, res) => {
