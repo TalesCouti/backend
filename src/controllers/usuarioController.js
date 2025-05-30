@@ -67,7 +67,7 @@ exports.cadastro = async (req, res) => {
     res.status(500).json('Erro interno no servidor.');
   }
 };
-app.post('/usuario/cadastrar-nfc', async (req, res) => {
+app.post('/usuario/cadastroNFC', async (req, res) => {
   const { cpf, uid } = req.body;
 
   try {
