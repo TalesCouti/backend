@@ -148,6 +148,25 @@ exports.cadastroNFC = async (req, res) => {
     handleError(res, error, 'Erro ao cadastrar pulseira');
   }
 };
+exports.removerNFC = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const result = await pool.query(
+      'UPDATE usuario SET nfc_uid = NULL WHERE id = $1 RETURNING *',
+      [userId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, message: 'Usuário não encontrado' });
+    }
+
+    res.json({ success: true, message: 'Pulseira removida com sucesso' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Erro ao remover pulseira' });
+  }
+};
 
 exports.getUsuario = async (req, res) => {
   const { id } = req.user;
