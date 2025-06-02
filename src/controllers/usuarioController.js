@@ -163,11 +163,12 @@ exports.getUsuario = async (req, res) => {
     `, [id]);
 
     if (usuarioInfo.rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Usuário não encontrado' });
+      return res.status(404).json({ message: 'Usuário não encontrado' });
     }
-
-    res.json({ success: true, data: usuarioInfo.rows[0] });
+    res.json(usuarioInfo.rows[0]);
+    
   } catch (error) {
-    handleError(res, error, 'Erro ao buscar informações do usuário');
+    console.error('Erro ao buscar usuário:', error);
+    res.status(500).json({ message: 'Erro ao buscar informações do usuário' });
   }
 };
