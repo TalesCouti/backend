@@ -185,10 +185,25 @@ exports.removerNFC = async (req, res) => {
 exports.getUsuario = async (req, res) => {
   const { id } = req.user;
 
+  exports.getUsuario = async (req, res) => {
+  const { id } = req.user;
+
   try {
     const usuarioInfo = await pool.query(`
-      SELECT i.nome, i.email, i.telefone, i.data_nascimento, i.imagem_perfil,
-             e.cep, e.estado, e.cidade, e.bairro, e.logradouro, e.numero, e.complemento
+      SELECT 
+        i.nome, 
+        i.email, 
+        i.telefone, 
+        i.data_nascimento, 
+        i.imagem_perfil,
+        e.cep, 
+        e.estado, 
+        e.cidade, 
+        e.bairro, 
+        e.logradouro, 
+        e.numero, 
+        e.complemento,
+        u.nfc_uid
       FROM informacoes_usuario i
       JOIN usuario u ON i.usuario_id = u.id
       JOIN endereco_usuario e ON e.usuario_id = u.id
@@ -198,6 +213,7 @@ exports.getUsuario = async (req, res) => {
     if (usuarioInfo.rows.length === 0) {
       return res.status(404).json({ message: 'Usuário não encontrado' });
     }
+
     res.json(usuarioInfo.rows[0]);
     
   } catch (error) {
