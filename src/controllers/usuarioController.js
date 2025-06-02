@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken');
 
 const SECRET = process.env.JWT_SECRET;
 
-// Helper function para respostas de erro
 const handleError = (res, error, message = 'Erro interno do servidor') => {
   console.error(error);
   res.status(500).json({ success: false, message });
@@ -13,7 +12,6 @@ const handleError = (res, error, message = 'Erro interno do servidor') => {
 exports.login = async (req, res) => {
   const { cpf, senha } = req.body;
 
-  // Validação básica
   if (!cpf || !senha) {
     return res.status(400).json({ success: false, message: 'CPF e senha são obrigatórios' });
   }
@@ -41,7 +39,6 @@ exports.login = async (req, res) => {
 exports.loginNfc = async (req, res) => {
   const { uid } = req.body;
 
-  // Validação do UID
   if (!uid || typeof uid !== 'string' || uid.length < 4) {
     return res.status(400).json({ success: false, message: 'UID inválido' });
   }
@@ -72,22 +69,21 @@ exports.loginNfc = async (req, res) => {
 exports.cadastro = async (req, res) => {
   const { nome, cpf, senha, email, telefone, dataNascimento, cep, estado, cidade, bairro, logradouro, numero, complemento } = req.body;
 
-  // Validações básicas
+
   if (!cpf || !senha || !nome) {
     return res.status(400).json({ success: false, message: 'Campos obrigatórios faltando' });
   }
 
   try {
-    // Verifica CPF existente
+
     const cpfExistente = await pool.query('SELECT id FROM usuario WHERE cpf = $1', [cpf]);
     if (cpfExistente.rows.length > 0) {
       return res.status(400).json({ success: false, message: 'CPF já cadastrado' });
     }
 
-    // Hash da senha
+
     const hashedPassword = await bcrypt.hash(senha, 10);
 
-    // Transação para garantir integridade dos dados
     await pool.query('BEGIN');
 
     try {
@@ -128,7 +124,7 @@ exports.cadastroNFC = async (req, res) => {
   }
 
   try {
-    // Verifica se o UID já está em uso
+    
     const uidExistente = await pool.query('SELECT id FROM usuario WHERE nfc_uid = $1 AND id != $2', [uid, userId]);
     if (uidExistente.rows.length > 0) {
       return res.status(400).json({ success: false, message: 'Esta pulseira já está cadastrada para outro usuário' });
@@ -166,7 +162,6 @@ exports.removerNFC = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Usuário não possui pulseira cadastrada' });
     }
 
-    // Remove a pulseira
     const result = await pool.query(
       'UPDATE usuario SET nfc_uid = NULL WHERE id = $1 RETURNING id',
       [userId]
@@ -183,9 +178,6 @@ exports.removerNFC = async (req, res) => {
 };
 
 exports.getUsuario = async (req, res) => {
-  const { id } = req.user;
-
-  exports.getUsuario = async (req, res) => {
   const { id } = req.user;
 
   try {
