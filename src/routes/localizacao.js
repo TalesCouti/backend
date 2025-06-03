@@ -6,7 +6,7 @@ router.get('/hospitais', async (req, res) => {
   const { lat, lng } = req.query;
 
   if (!lat || !lng) {
-    return res.status(400).json({ error: 'Parâmetros lat e lng são obrigatórios' });
+    return res.status(400).json({ error: 'Parâmetros latitude e longitude são obrigatórios' });
   }
 
   const key = process.env.MAPS_KEY;
