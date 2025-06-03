@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getConsulta, inserirConsulta } = require('../controllersPaciente/consultaController');
-const { getConsulta, inserirConsulta } = require('../controllersMedico/consultaController');
+const { getConsultaMedico, inserirConsultaMedico } = require('../controllersMedico/consultaController');
 
 const auth = require('../middleware/auth');
 

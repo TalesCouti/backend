@@ -1,6 +1,6 @@
 const pool = require('../db/pool');
 
-exports.getConsulta = async (req, res) => {
+exports.getConsultaMedico = async (req, res) => {
   try {
    
     const userId = req.user?.id;
@@ -45,7 +45,7 @@ exports.getConsulta = async (req, res) => {
   }
 };
 
-exports.inserirConsulta = async (req, res) => {
+exports.inserirConsultaMedico = async (req, res) => {
   try {
 
     const requiredFields = ['id_medico', 'data_hora', 'status'];
