@@ -15,15 +15,14 @@ exports.getConsulta = async (req, res) => {
     const result = await pool.query(`
       SELECT 
       c.id,
-      im.nome,
-      im.especialidade,
-      im.imagem_perfil,
+      iu.nome,
+      iu.imagem_perfil,
       c.status,
       c.valor,
       c.data_hora
       FROM consulta c
-      JOIN informacoes_medico im ON c.medico_id = im.medico_id
-      WHERE c.usuario_id = $1
+      JOIN informacoes_usuario iu ON c.usuario_id = iu.usuario_id
+      WHERE c.medico_id = $1
       ORDER BY c.data_hora DESC
     `, [userId]);
 
