@@ -97,3 +97,17 @@ exports.inserirConsultaMedico = async (req, res) => {
     });
   }
 };
+
+exports.inserirResultadoConsulta = async (req, res) => {
+ exports.cadastro = async (req, res) => {
+  const { motivo, observacoes,exames, diagnostico, sintomas } = req.body;
+
+
+    await pool.query('BEGIN');
+      await pool.query(
+        'INSERT INTO consulta_usuario (motivo,observacoes,sintomas,exames,diagnostico,sintomas) VALUES ($1, $2, $3, $4, $5, $6)',
+        [motivo, observacoes, sintomas, exames, diagnostico, sintomas]
+      );
+    }
+  }
+  
