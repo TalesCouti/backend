@@ -110,7 +110,7 @@ exports.inserirResultadoConsulta = async (req, res) => {
     
     // Insere o resultado da consulta
     const resultadoConsulta = await pool.query(
-      'INSERT INTO resultado_consulta (id_consulta, motivo, observacoes, sintomas, exames, diagnostico) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+      'INSERT INTO resultado_consulta (id_consulta, motivo, observacoes, sintomas, exames, diagnostico) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id_consulta',
       [id_consulta, motivo, observacoes, sintomas, exames, diagnostico]
     );
 
@@ -120,7 +120,7 @@ exports.inserirResultadoConsulta = async (req, res) => {
         await pool.query(
           'INSERT INTO receita (id_resultado, medicamento, dosagem, frequencia, duracao, observacoes) VALUES ($1, $2, $3, $4, $5, $6)',
           [
-            resultadoConsulta.rows[0].id,
+            resultadoConsulta.rows[0].id_consulta,
             receita.medicamento,
             receita.dosagem,
             receita.frequencia,
