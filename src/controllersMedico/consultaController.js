@@ -108,10 +108,28 @@ exports.inserirResultadoConsulta = async (req, res) => {
 
     await pool.query('BEGIN');
     
-    await pool.query(
-      'INSERT INTO resultado_consulta (id_consulta, motivo, observacoes, sintomas, exames, diagnostico) VALUES ($1, $2, $3, $4, $5, $6)',
+    // Insere o resultado da consulta
+    const resultadoConsulta = await pool.query(
+      'INSERT INTO resultado_consulta (id_consulta, motivo, observacoes, sintomas, exames, diagnostico) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
       [id_consulta, motivo, observacoes, sintomas, exames, diagnostico]
     );
+
+    // Se houver receitas, insere cada uma delas
+    if (req.body.receitas && req.body.receitas.length > 0) {
+      for (const receita of req.body.receitas) {
+        await pool.query(
+          'INSERT INTO receita (id_resultado, medicamento, dosagem, frequencia, duracao, observacoes) VALUES ($1, $2, $3, $4, $5, $6)',
+          [
+            resultadoConsulta.rows[0].id,
+            receita.medicamento,
+            receita.dosagem,
+            receita.frequencia,
+            receita.duracao,
+            receita.observacoes
+          ]
+        );
+      }
+    }
 
     await pool.query('COMMIT');
 
@@ -181,3 +199,4 @@ exports.getDadosConsulta = async (req, res) => {
     });
   }
 };
+
