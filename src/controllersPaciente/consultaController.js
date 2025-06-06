@@ -124,7 +124,7 @@ exports.getDadosConsulta = async (req, res) => {
         r.duracao,
         r.observacoes as observacoes_receita
       FROM resultado_consulta ru
-      LEFT JOIN receita r ON r.id_resultado = ru.id
+      LEFT JOIN receita r ON r.id_consulta = ru.id_consulta
       WHERE cu.id_consulta = $1
     `, [id_consulta]);
 
