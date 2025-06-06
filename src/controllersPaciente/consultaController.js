@@ -98,3 +98,54 @@ exports.inserirConsulta = async (req, res) => {
     });
   }
 };
+
+exports.getDadosConsulta = async (req, res) => {
+  try {
+    const { id_consulta } = req.params;
+
+    if (!id_consulta) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID da consulta é obrigatório'
+      });
+    }
+
+    const result = await pool.query(`
+      SELECT 
+        cu.id_consulta,
+        cu.motivo,
+        cu.observacoes,
+        cu.sintomas,
+        cu.exames,
+        cu.diagnostico,
+        r.medicamento,
+        r.dosagem,
+        r.frequencia,
+        r.duracao,
+        r.observacoes as observacoes_receita
+      FROM resultado_consulta ru
+      LEFT JOIN receita r ON r.id_resultado = ru.id
+      WHERE cu.id_consulta = $1
+    `, [id_consulta]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Consulta não encontrada'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Erro ao buscar dados da consulta:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Falha ao buscar dados da consulta',
+      errorCode: 'DB_QUERY_ERROR'
+    });
+  }
+};
