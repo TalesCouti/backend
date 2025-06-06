@@ -122,7 +122,7 @@ exports.inserirResultadoConsulta = async (req, res) => {
     if (req.body.receitas && req.body.receitas.length > 0) {
       for (const receita of req.body.receitas) {
         await pool.query(
-          'INSERT INTO receita (id_resultado, medicamento, dosagem, frequencia, duracao, observacoes) VALUES ($1, $2, $3, $4, $5, $6)',
+          'INSERT INTO receita (id_consulta, medicamento, dosagem, frequencia, duracao, observacoes) VALUES ($1, $2, $3, $4, $5, $6)',
           [
             resultadoConsulta.rows[0].id_consulta,
             receita.medicamento,
