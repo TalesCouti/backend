@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getConsulta, inserirConsulta } = require('../controllersPaciente/consultaController');
-const { getConsultaMedico, inserirConsultaMedico } = require('../controllersMedico/consultaController');
+const { getConsultaMedico, inserirConsultaMedico, inserirResultadoConsulta } = require('../controllersMedico/consultaController');
 const pool = require('../db/pool');
 const auth = require('../middleware/auth');
 
@@ -24,5 +24,6 @@ router.get('/sintomas', async (req, res) => {
 
 router.get('/medico', auth, getConsultaMedico);
 router.post('/medico/consulta', auth, inserirConsultaMedico);
+router.post('/resultado', auth, inserirResultadoConsulta);
 
 module.exports = router;

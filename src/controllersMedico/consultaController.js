@@ -99,16 +99,18 @@ exports.inserirResultadoConsulta = async (req, res) => {
   try {
     const { id_consulta, motivo, observacoes, exames, diagnostico, sintomas } = req.body;
 
+    if (!id_consulta) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID da consulta é obrigatório'
+      });
+    }
+
     await pool.query('BEGIN');
     
     await pool.query(
-      'INSERT INTO resultado_consulta (id_consulta, motivo, observacoes, sintomas, exames, diagnostico) VALUES ($1, $2, $3, $4, $5, $6)',
+      'INSERT INTO consulta_usuario (id_consulta, motivo, observacoes, sintomas, exames, diagnostico) VALUES ($1, $2, $3, $4, $5, $6)',
       [id_consulta, motivo, observacoes, sintomas, exames, diagnostico]
-    );
-
-    await pool.query(
-      'INSERT INTO receita (id_resultado, medicamento, dosagem, frequencia, duracao, observacoes) VALUES ($1, $2, $3, $4, $5, $6)',
-      [id_resultado, medicamento, dosagem, frequencia, duracao, observacoes]
     );
 
     await pool.query('COMMIT');
