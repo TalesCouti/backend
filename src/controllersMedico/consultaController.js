@@ -47,7 +47,6 @@ exports.getConsultaMedico = async (req, res) => {
 
 exports.inserirConsultaMedico = async (req, res) => {
   try {
-
     const requiredFields = ['id_medico', 'data_hora', 'status'];
     const missingFields = requiredFields.filter(field => !req.body[field]);
     
@@ -59,9 +58,8 @@ exports.inserirConsultaMedico = async (req, res) => {
       });
     }
 
-    
     const result = await pool.query(`
-      INSERT INTO consulta (id_usuario, id_medico, data_hora, status)
+      INSERT INTO consulta (id_usuario, id_medico, data_hora, status, valor)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING *
     `, [
@@ -72,7 +70,6 @@ exports.inserirConsultaMedico = async (req, res) => {
       req.body.valor || 300.00
     ]);
 
-  
     res.status(201).json({
       success: true,
       data: result.rows[0],
@@ -99,15 +96,35 @@ exports.inserirConsultaMedico = async (req, res) => {
 };
 
 exports.inserirResultadoConsulta = async (req, res) => {
- exports.cadastro = async (req, res) => {
-  const { motivo, observacoes,exames, diagnostico, sintomas } = req.body;
-
+  try {
+    const { id_consulta, motivo, observacoes, exames, diagnostico, sintomas } = req.body;
 
     await pool.query('BEGIN');
-      await pool.query(
-        'INSERT INTO consulta_usuario (motivo,observacoes,sintomas,exames,diagnostico,sintomas) VALUES ($1, $2, $3, $4, $5, $6)',
-        [motivo, observacoes, sintomas, exames, diagnostico, sintomas]
-      );
-    }
+    
+    await pool.query(
+      'INSERT INTO resultado_consulta (id_consulta, motivo, observacoes, sintomas, exames, diagnostico) VALUES ($1, $2, $3, $4, $5, $6)',
+      [id_consulta, motivo, observacoes, sintomas, exames, diagnostico]
+    );
+
+    await pool.query(
+      'INSERT INTO receita (id_resultado, medicamento, dosagem, frequencia, duracao, observacoes) VALUES ($1, $2, $3, $4, $5, $6)',
+      [id_resultado, medicamento, dosagem, frequencia, duracao, observacoes]
+    );
+
+    await pool.query('COMMIT');
+
+    res.status(201).json({
+      success: true,
+      message: 'Resultado da consulta salvo com sucesso'
+    });
+
+  } catch (error) {
+    await pool.query('ROLLBACK');
+    console.error('Erro ao salvar resultado da consulta:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Falha ao salvar resultado da consulta',
+      errorCode: 'DB_INSERT_ERROR'
+    });
   }
-  
+};
