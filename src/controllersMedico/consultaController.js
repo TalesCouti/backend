@@ -122,10 +122,8 @@ exports.inserirResultadoConsulta = async (req, res) => {
       if (Array.isArray(sintomas)) {
         sintomasArray = sintomas;
       } else if (typeof sintomas === 'object' && sintomas !== null) {
-        // Se for um objeto, converte para array
         sintomasArray = Object.values(sintomas);
       } else if (typeof sintomas === 'string') {
-        // Se for uma string, tenta fazer parse de JSON
         try {
           const parsedSintomas = JSON.parse(sintomas);
           sintomasArray = Array.isArray(parsedSintomas) ? parsedSintomas : [parsedSintomas];
@@ -142,12 +140,37 @@ exports.inserirResultadoConsulta = async (req, res) => {
     const examesArray = Array.isArray(exames) ? exames : [];
 
     await pool.query('BEGIN');
-    
-    // Insere o resultado da consulta
-    const resultadoConsulta = await pool.query(
-      'INSERT INTO resultado_consulta (id_consulta, motivo, observacoes, sintomas, exames, diagnostico) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id_consulta',
-      [id_consulta, motivo, observacoes, sintomasArray, examesArray, diagnostico]
+
+    // Verifica se já existe um resultado para esta consulta
+    const resultadoExistente = await pool.query(
+      'SELECT id_consulta FROM resultado_consulta WHERE id_consulta = $1',
+      [id_consulta]
     );
+
+    let resultadoConsulta;
+    if (resultadoExistente.rows.length > 0) {
+      // Se existe, faz UPDATE
+      resultadoConsulta = await pool.query(
+        `UPDATE resultado_consulta 
+         SET motivo = $1, 
+             observacoes = $2, 
+             sintomas = $3, 
+             exames = $4, 
+             diagnostico = $5
+         WHERE id_consulta = $6
+         RETURNING id_consulta`,
+        [motivo, observacoes, sintomasArray, examesArray, diagnostico, id_consulta]
+      );
+
+      // Remove receitas antigas
+      await pool.query('DELETE FROM receita WHERE id_consulta = $1', [id_consulta]);
+    } else {
+      // Se não existe, faz INSERT
+      resultadoConsulta = await pool.query(
+        'INSERT INTO resultado_consulta (id_consulta, motivo, observacoes, sintomas, exames, diagnostico) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id_consulta',
+        [id_consulta, motivo, observacoes, sintomasArray, examesArray, diagnostico]
+      );
+    }
 
     // Se houver receitas, insere cada uma delas
     if (req.body.receitas && req.body.receitas.length > 0) {
