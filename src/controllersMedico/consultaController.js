@@ -211,6 +211,7 @@ exports.getDadosConsulta = async (req, res) => {
   try {
     const { id_consulta } = req.params;
     console.log('Buscando dados da consulta:', id_consulta);
+    console.log('Usuário autenticado:', req.user?.id);
 
     if (!id_consulta) {
       console.log('ID da consulta não fornecido');
@@ -231,8 +232,8 @@ exports.getDadosConsulta = async (req, res) => {
         iu.nome as nome_paciente,
         iu.imagem_perfil as imagem_paciente
       FROM consulta c
-      JOIN informacoes_medico im ON c.id_medico = im.medico_id
-      JOIN informacoes_usuario iu ON c.id_usuario = iu.usuario_id
+      JOIN informacoes_medico im ON c.medico_id = im.medico_id
+      JOIN informacoes_usuario iu ON c.usuario_id = iu.usuario_id
       WHERE c.id = $1
     `, [id_consulta]);
 
@@ -280,11 +281,11 @@ exports.getDadosConsulta = async (req, res) => {
         nome: consultaResult.rows[0].nome_paciente,
         imagem_perfil: consultaResult.rows[0].imagem_paciente
       },
-      motivo: result.rows[0]?.motivo,
-      observacoes: result.rows[0]?.observacoes,
-      sintomas: result.rows[0]?.sintomas,
-      exames: result.rows[0]?.exames,
-      diagnostico: result.rows[0]?.diagnostico,
+      motivo: result.rows[0]?.motivo || null,
+      observacoes: result.rows[0]?.observacoes || null,
+      sintomas: result.rows[0]?.sintomas || [],
+      exames: result.rows[0]?.exames || [],
+      diagnostico: result.rows[0]?.diagnostico || null,
       receitas: []
     };
 

@@ -23,7 +23,7 @@ router.get('/sintomas', async (req, res) => {
 });
 
 router.get('/medico', auth, getConsultaMedico);
-router.post('/medico/consulta', auth, inserirConsultaMedico);
+router.post('/medico', auth, inserirConsultaMedico);
 router.post('/resultado', auth, inserirResultadoConsulta);
 router.get('/dados/:id_consulta', auth, getDadosConsulta);
 
