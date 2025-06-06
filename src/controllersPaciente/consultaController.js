@@ -112,20 +112,20 @@ exports.getDadosConsulta = async (req, res) => {
 
     const result = await pool.query(`
       SELECT 
-        cu.id_consulta,
-        cu.motivo,
-        cu.observacoes,
-        cu.sintomas,
-        cu.exames,
-        cu.diagnostico,
+        rc.id_consulta,
+        rc.motivo,
+        rc.observacoes,
+        rc.sintomas,
+        rc.exames,
+        rc.diagnostico,
         r.medicamento,
         r.dosagem,
         r.frequencia,
         r.duracao,
         r.observacoes as observacoes_receita
-      FROM resultado_consulta ru
-      LEFT JOIN receita r ON r.id_consulta = ru.id_consulta
-      WHERE cu.id_consulta = $1
+      FROM resultado_consulta rc
+      LEFT JOIN receita r ON r.id_consulta = rc.id_consulta
+      WHERE rc.id_consulta = $1
     `, [id_consulta]);
 
     if (result.rows.length === 0) {
@@ -135,9 +135,33 @@ exports.getDadosConsulta = async (req, res) => {
       });
     }
 
+    // Processa os resultados para agrupar as receitas
+    const dados = {
+      id_consulta: result.rows[0].id_consulta,
+      motivo: result.rows[0].motivo,
+      observacoes: result.rows[0].observacoes,
+      sintomas: result.rows[0].sintomas,
+      exames: result.rows[0].exames,
+      diagnostico: result.rows[0].diagnostico,
+      receitas: []
+    };
+
+    // Adiciona as receitas se existirem
+    result.rows.forEach(row => {
+      if (row.medicamento) {
+        dados.receitas.push({
+          medicamento: row.medicamento,
+          dosagem: row.dosagem,
+          frequencia: row.frequencia,
+          duracao: row.duracao,
+          observacoes: row.observacoes_receita
+        });
+      }
+    });
+
     res.status(200).json({
       success: true,
-      data: result.rows[0]
+      data: dados
     });
 
   } catch (error) {
