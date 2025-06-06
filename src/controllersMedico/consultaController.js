@@ -210,8 +210,10 @@ exports.inserirResultadoConsulta = async (req, res) => {
 exports.getDadosConsulta = async (req, res) => {
   try {
     const { id_consulta } = req.params;
+    console.log('Buscando dados da consulta:', id_consulta);
 
     if (!id_consulta) {
+      console.log('ID da consulta não fornecido');
       return res.status(400).json({
         success: false,
         message: 'ID da consulta é obrigatório'
@@ -219,6 +221,7 @@ exports.getDadosConsulta = async (req, res) => {
     }
 
     // Primeiro, busca os dados básicos da consulta com informações do médico e paciente
+    console.log('Buscando dados básicos da consulta...');
     const consultaResult = await pool.query(`
       SELECT 
         c.id,
@@ -228,12 +231,15 @@ exports.getDadosConsulta = async (req, res) => {
         iu.nome as nome_paciente,
         iu.imagem_perfil as imagem_paciente
       FROM consulta c
-      JOIN informacoes_medico im ON c.medico_id = im.medico_id
-      JOIN informacoes_usuario iu ON c.usuario_id = iu.usuario_id
+      JOIN informacoes_medico im ON c.id_medico = im.medico_id
+      JOIN informacoes_usuario iu ON c.id_usuario = iu.usuario_id
       WHERE c.id = $1
     `, [id_consulta]);
 
+    console.log('Resultado da busca básica:', consultaResult.rows);
+
     if (consultaResult.rows.length === 0) {
+      console.log('Consulta não encontrada');
       return res.status(404).json({
         success: false,
         message: 'Consulta não encontrada'
@@ -241,6 +247,7 @@ exports.getDadosConsulta = async (req, res) => {
     }
 
     // Depois, busca os dados do resultado da consulta
+    console.log('Buscando dados do resultado da consulta...');
     const result = await pool.query(`
       SELECT 
         rc.id_consulta,
@@ -258,6 +265,8 @@ exports.getDadosConsulta = async (req, res) => {
       LEFT JOIN receita r ON r.id_consulta = rc.id_consulta
       WHERE rc.id_consulta = $1
     `, [id_consulta]);
+
+    console.log('Resultado da busca de dados:', result.rows);
 
     // Processa os resultados para agrupar as receitas
     const dados = {
@@ -294,17 +303,25 @@ exports.getDadosConsulta = async (req, res) => {
       });
     }
 
+    console.log('Dados processados:', dados);
+
     res.status(200).json({
       success: true,
       data: dados
     });
 
   } catch (error) {
-    console.error('Erro ao buscar dados da consulta:', error);
+    console.error('Erro detalhado ao buscar dados da consulta:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+      detail: error.detail
+    });
     res.status(500).json({
       success: false,
       message: 'Falha ao buscar dados da consulta',
-      errorCode: 'DB_QUERY_ERROR'
+      errorCode: 'DB_QUERY_ERROR',
+      error: error.message
     });
   }
 };
