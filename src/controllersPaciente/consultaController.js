@@ -102,6 +102,7 @@ exports.inserirConsulta = async (req, res) => {
 exports.getDadosConsulta = async (req, res) => {
   try {
     const { id_consulta } = req.params;
+    console.log('Buscando dados da consulta:', id_consulta);
 
     if (!id_consulta) {
       return res.status(400).json({
@@ -110,6 +111,29 @@ exports.getDadosConsulta = async (req, res) => {
       });
     }
 
+    // Primeiro, busca os dados básicos da consulta
+    const consultaResult = await pool.query(`
+      SELECT 
+        c.id,
+        c.status,
+        c.data_hora,
+        im.nome as nome_medico,
+        im.especialidade,
+        im.imagem_perfil
+      FROM consulta c
+      JOIN informacoes_medico im ON c.medico_id = im.medico_id
+      WHERE c.id = $1
+    `, [id_consulta]);
+
+    if (consultaResult.rows.length === 0) {
+      console.log('Consulta não encontrada:', id_consulta);
+      return res.status(404).json({
+        success: false,
+        message: 'Consulta não encontrada'
+      });
+    }
+
+    // Depois, busca os dados do resultado da consulta
     const result = await pool.query(`
       SELECT 
         rc.id_consulta,
@@ -128,36 +152,35 @@ exports.getDadosConsulta = async (req, res) => {
       WHERE rc.id_consulta = $1
     `, [id_consulta]);
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Consulta não encontrada'
-      });
-    }
+    console.log('Resultado encontrado:', result.rows);
 
     // Processa os resultados para agrupar as receitas
     const dados = {
-      id_consulta: result.rows[0].id_consulta,
-      motivo: result.rows[0].motivo,
-      observacoes: result.rows[0].observacoes,
-      sintomas: result.rows[0].sintomas,
-      exames: result.rows[0].exames,
-      diagnostico: result.rows[0].diagnostico,
+      ...consultaResult.rows[0],
+      motivo: result.rows[0]?.motivo || null,
+      observacoes: result.rows[0]?.observacoes || null,
+      sintomas: result.rows[0]?.sintomas || [],
+      exames: result.rows[0]?.exames || [],
+      diagnostico: result.rows[0]?.diagnostico || null,
       receitas: []
     };
 
     // Adiciona as receitas se existirem
-    result.rows.forEach(row => {
-      if (row.medicamento) {
-        dados.receitas.push({
-          medicamento: row.medicamento,
-          dosagem: row.dosagem,
-          frequencia: row.frequencia,
-          duracao: row.duracao,
-          observacoes: row.observacoes_receita
-        });
-      }
-    });
+    if (result.rows.length > 0) {
+      result.rows.forEach(row => {
+        if (row.medicamento) {
+          dados.receitas.push({
+            medicamento: row.medicamento,
+            dosagem: row.dosagem,
+            frequencia: row.frequencia,
+            duracao: row.duracao,
+            observacoes: row.observacoes_receita
+          });
+        }
+      });
+    }
+
+    console.log('Dados processados:', dados);
 
     res.status(200).json({
       success: true,
@@ -165,7 +188,11 @@ exports.getDadosConsulta = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Erro ao buscar dados da consulta:', error);
+    console.error('Erro detalhado ao buscar dados da consulta:', {
+      error: error.message,
+      stack: error.stack,
+      code: error.code
+    });
     res.status(500).json({
       success: false,
       message: 'Falha ao buscar dados da consulta',

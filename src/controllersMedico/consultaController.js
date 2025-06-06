@@ -218,6 +218,29 @@ exports.getDadosConsulta = async (req, res) => {
       });
     }
 
+    // Primeiro, busca os dados básicos da consulta com informações do médico e paciente
+    const consultaResult = await pool.query(`
+      SELECT 
+        c.id,
+        im.nome as nome_medico,
+        im.especialidade,
+        im.imagem_perfil as imagem_medico,
+        iu.nome as nome_paciente,
+        iu.imagem_perfil as imagem_paciente
+      FROM consulta c
+      JOIN informacoes_medico im ON c.medico_id = im.medico_id
+      JOIN informacoes_usuario iu ON c.usuario_id = iu.usuario_id
+      WHERE c.id = $1
+    `, [id_consulta]);
+
+    if (consultaResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Consulta não encontrada'
+      });
+    }
+
+    // Depois, busca os dados do resultado da consulta
     const result = await pool.query(`
       SELECT 
         rc.id_consulta,
@@ -236,36 +259,40 @@ exports.getDadosConsulta = async (req, res) => {
       WHERE rc.id_consulta = $1
     `, [id_consulta]);
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Consulta não encontrada'
-      });
-    }
-
     // Processa os resultados para agrupar as receitas
     const dados = {
-      id_consulta: result.rows[0].id_consulta,
-      motivo: result.rows[0].motivo,
-      observacoes: result.rows[0].observacoes,
-      sintomas: result.rows[0].sintomas,
-      exames: result.rows[0].exames,
-      diagnostico: result.rows[0].diagnostico,
+      id_consulta: id_consulta,
+      medico: {
+        nome: consultaResult.rows[0].nome_medico,
+        especialidade: consultaResult.rows[0].especialidade,
+        imagem_perfil: consultaResult.rows[0].imagem_medico
+      },
+      paciente: {
+        nome: consultaResult.rows[0].nome_paciente,
+        imagem_perfil: consultaResult.rows[0].imagem_paciente
+      },
+      motivo: result.rows[0]?.motivo,
+      observacoes: result.rows[0]?.observacoes,
+      sintomas: result.rows[0]?.sintomas,
+      exames: result.rows[0]?.exames,
+      diagnostico: result.rows[0]?.diagnostico,
       receitas: []
     };
 
     // Adiciona as receitas se existirem
-    result.rows.forEach(row => {
-      if (row.medicamento) {
-        dados.receitas.push({
-          medicamento: row.medicamento,
-          dosagem: row.dosagem,
-          frequencia: row.frequencia,
-          duracao: row.duracao,
-          observacoes: row.observacoes_receita
-        });
-      }
-    });
+    if (result.rows.length > 0) {
+      result.rows.forEach(row => {
+        if (row.medicamento) {
+          dados.receitas.push({
+            medicamento: row.medicamento,
+            dosagem: row.dosagem,
+            frequencia: row.frequencia,
+            duracao: row.duracao,
+            observacoes: row.observacoes_receita
+          });
+        }
+      });
+    }
 
     res.status(200).json({
       success: true,
