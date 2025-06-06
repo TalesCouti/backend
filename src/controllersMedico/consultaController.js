@@ -99,6 +99,16 @@ exports.inserirResultadoConsulta = async (req, res) => {
   try {
     const { id_consulta, motivo, observacoes, exames, diagnostico, sintomas } = req.body;
 
+    // Log para debug
+    console.log('Dados recebidos:', {
+      id_consulta,
+      motivo,
+      observacoes,
+      exames,
+      diagnostico,
+      sintomas
+    });
+
     if (!id_consulta) {
       return res.status(400).json({
         success: false,
@@ -106,9 +116,30 @@ exports.inserirResultadoConsulta = async (req, res) => {
       });
     }
 
-    // Garantir que exames e sintomas sejam arrays válidos
+    // Validação mais robusta dos sintomas
+    let sintomasArray = [];
+    if (sintomas) {
+      if (Array.isArray(sintomas)) {
+        sintomasArray = sintomas;
+      } else if (typeof sintomas === 'object' && sintomas !== null) {
+        // Se for um objeto, converte para array
+        sintomasArray = Object.values(sintomas);
+      } else if (typeof sintomas === 'string') {
+        // Se for uma string, tenta fazer parse de JSON
+        try {
+          const parsedSintomas = JSON.parse(sintomas);
+          sintomasArray = Array.isArray(parsedSintomas) ? parsedSintomas : [parsedSintomas];
+        } catch (e) {
+          sintomasArray = [sintomas];
+        }
+      }
+    }
+
+    // Log para debug após processamento
+    console.log('Sintomas processados:', sintomasArray);
+
+    // Garantir que exames seja um array válido
     const examesArray = Array.isArray(exames) ? exames : [];
-    const sintomasArray = Array.isArray(sintomas) ? sintomas : [];
 
     await pool.query('BEGIN');
     
@@ -166,20 +197,20 @@ exports.getDadosConsulta = async (req, res) => {
 
     const result = await pool.query(`
       SELECT 
-        cu.id_consulta,
-        cu.motivo,
-        cu.observacoes,
-        cu.sintomas,
-        cu.exames,
-        cu.diagnostico,
+        rc.id_consulta,
+        rc.motivo,
+        rc.observacoes,
+        rc.sintomas,
+        rc.exames,
+        rc.diagnostico,
         r.medicamento,
         r.dosagem,
         r.frequencia,
         r.duracao,
         r.observacoes as observacoes_receita
-      FROM resultado_consulta ru
-      LEFT JOIN receita r ON r.id_consulta = ru.id_consulta
-      WHERE ru.id_consulta = $1
+      FROM resultado_consulta rc
+      LEFT JOIN receita r ON r.id_consulta = rc.id_consulta
+      WHERE rc.id_consulta = $1
     `, [id_consulta]);
 
     if (result.rows.length === 0) {
@@ -189,9 +220,33 @@ exports.getDadosConsulta = async (req, res) => {
       });
     }
 
+    // Processa os resultados para agrupar as receitas
+    const dados = {
+      id_consulta: result.rows[0].id_consulta,
+      motivo: result.rows[0].motivo,
+      observacoes: result.rows[0].observacoes,
+      sintomas: result.rows[0].sintomas,
+      exames: result.rows[0].exames,
+      diagnostico: result.rows[0].diagnostico,
+      receitas: []
+    };
+
+    // Adiciona as receitas se existirem
+    result.rows.forEach(row => {
+      if (row.medicamento) {
+        dados.receitas.push({
+          medicamento: row.medicamento,
+          dosagem: row.dosagem,
+          frequencia: row.frequencia,
+          duracao: row.duracao,
+          observacoes: row.observacoes_receita
+        });
+      }
+    });
+
     res.status(200).json({
       success: true,
-      data: result.rows[0]
+      data: dados
     });
 
   } catch (error) {
