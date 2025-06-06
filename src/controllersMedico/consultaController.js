@@ -106,12 +106,16 @@ exports.inserirResultadoConsulta = async (req, res) => {
       });
     }
 
+    // Garantir que exames e sintomas sejam arrays válidos
+    const examesArray = Array.isArray(exames) ? exames : [];
+    const sintomasArray = Array.isArray(sintomas) ? sintomas : [];
+
     await pool.query('BEGIN');
     
     // Insere o resultado da consulta
     const resultadoConsulta = await pool.query(
       'INSERT INTO resultado_consulta (id_consulta, motivo, observacoes, sintomas, exames, diagnostico) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id_consulta',
-      [id_consulta, motivo, observacoes, sintomas, exames, diagnostico]
+      [id_consulta, motivo, observacoes, sintomasArray, examesArray, diagnostico]
     );
 
     // Se houver receitas, insere cada uma delas
