@@ -241,8 +241,8 @@ exports.getDadosConsulta = async (req, res) => {
       valor: consultaResult.rows[0].valor,
       motivo: result.rows[0]?.motivo || null,
       observacoes: result.rows[0]?.observacoes || null,
-      sintomas: result.rows[0]?.sintomas || [],
-      exames: result.rows[0]?.exames || [],
+      sintomas: Array.isArray(result.rows[0]?.sintomas) ? result.rows[0].sintomas : [],
+      exames: Array.isArray(result.rows[0]?.exames) ? result.rows[0].exames : [],
       diagnostico: result.rows[0]?.diagnostico || null,
       receitas: []
     };
