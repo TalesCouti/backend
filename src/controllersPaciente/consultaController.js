@@ -2,7 +2,6 @@ const pool = require('../db/pool');
 
 exports.getConsulta = async (req, res) => {
   try {
-   
     const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ 
@@ -10,7 +9,6 @@ exports.getConsulta = async (req, res) => {
         message: 'Token inválido ou usuário não identificado'
       });
     }
-
 
     const result = await pool.query(`
       SELECT 
@@ -30,13 +28,11 @@ exports.getConsulta = async (req, res) => {
     res.status(200).json(result.rows);
 
   } catch (error) {
-   
     console.error('Erro em getConsulta:', {
       user: req.user?.id,
       error: error.message,
       stack: error.stack
     });
-
     
     res.status(500).json({
       success: false,
@@ -48,8 +44,7 @@ exports.getConsulta = async (req, res) => {
 
 exports.inserirConsulta = async (req, res) => {
   try {
-
-    const requiredFields = ['id_medico', 'data_hora', 'status'];
+    const requiredFields = ['medico_id', 'data_hora', 'status'];
     const missingFields = requiredFields.filter(field => !req.body[field]);
     
     if (missingFields.length > 0) {
@@ -60,9 +55,8 @@ exports.inserirConsulta = async (req, res) => {
       });
     }
 
-    
     const result = await pool.query(`
-      INSERT INTO consulta (id_usuario, id_medico, data_hora, status)
+      INSERT INTO consulta (usuario_id, medico_id, data_hora, status, valor)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING *
     `, [
@@ -73,7 +67,6 @@ exports.inserirConsulta = async (req, res) => {
       req.body.valor || 300.00
     ]);
 
-  
     res.status(201).json({
       success: true,
       data: result.rows[0],
@@ -111,7 +104,6 @@ exports.getDadosConsulta = async (req, res) => {
       });
     }
 
-    // Primeiro, busca os dados básicos da consulta
     const consultaResult = await pool.query(`
       SELECT 
         c.id,
@@ -119,9 +111,12 @@ exports.getDadosConsulta = async (req, res) => {
         c.data_hora,
         im.nome as nome_medico,
         im.especialidade,
-        im.imagem_perfil
+        im.imagem_perfil as imagem_medico,
+        iu.nome as nome_paciente,
+        iu.imagem_perfil as imagem_paciente
       FROM consulta c
       JOIN informacoes_medico im ON c.medico_id = im.medico_id
+      JOIN informacoes_usuario iu ON c.usuario_id = iu.usuario_id
       WHERE c.id = $1
     `, [id_consulta]);
 
@@ -133,7 +128,6 @@ exports.getDadosConsulta = async (req, res) => {
       });
     }
 
-    // Depois, busca os dados do resultado da consulta
     const result = await pool.query(`
       SELECT 
         rc.id_consulta,
@@ -154,7 +148,6 @@ exports.getDadosConsulta = async (req, res) => {
 
     console.log('Resultado encontrado:', result.rows);
 
-    // Processa os resultados para agrupar as receitas
     const dados = {
       ...consultaResult.rows[0],
       motivo: result.rows[0]?.motivo || null,
@@ -165,7 +158,6 @@ exports.getDadosConsulta = async (req, res) => {
       receitas: []
     };
 
-    // Adiciona as receitas se existirem
     if (result.rows.length > 0) {
       result.rows.forEach(row => {
         if (row.medicamento) {

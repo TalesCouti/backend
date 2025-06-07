@@ -2,7 +2,6 @@ const pool = require('../db/pool');
 
 exports.getConsultaMedico = async (req, res) => {
   try {
-   
     const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ 
@@ -10,7 +9,6 @@ exports.getConsultaMedico = async (req, res) => {
         message: 'Token inválido ou usuário não identificado'
       });
     }
-
 
     const result = await pool.query(`
       SELECT 
@@ -29,13 +27,11 @@ exports.getConsultaMedico = async (req, res) => {
     res.status(200).json(result.rows);
 
   } catch (error) {
-   
     console.error('Erro em getConsulta:', {
       user: req.user?.id,
       error: error.message,
       stack: error.stack
     });
-
     
     res.status(500).json({
       success: false,
@@ -47,7 +43,7 @@ exports.getConsultaMedico = async (req, res) => {
 
 exports.inserirConsultaMedico = async (req, res) => {
   try {
-    const requiredFields = ['id_medico', 'data_hora', 'status'];
+    const requiredFields = ['usuario_id', 'data_hora', 'status'];
     const missingFields = requiredFields.filter(field => !req.body[field]);
     
     if (missingFields.length > 0) {
@@ -59,12 +55,12 @@ exports.inserirConsultaMedico = async (req, res) => {
     }
 
     const result = await pool.query(`
-      INSERT INTO consulta (id_usuario, id_medico, data_hora, status, valor)
+      INSERT INTO consulta (usuario_id, medico_id, data_hora, status, valor)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING *
     `, [
+      req.body.usuario_id,
       req.user.id,
-      req.body.medico_id,
       req.body.data_hora,
       req.body.status,
       req.body.valor || 300.00
@@ -82,8 +78,8 @@ exports.inserirConsultaMedico = async (req, res) => {
     if (error.code === '23503') { 
       return res.status(400).json({
         success: false,
-        message: 'Médico não encontrado',
-        errorCode: 'DOCTOR_NOT_FOUND'
+        message: 'Usuário não encontrado',
+        errorCode: 'USER_NOT_FOUND'
       });
     }
 
@@ -97,17 +93,8 @@ exports.inserirConsultaMedico = async (req, res) => {
 
 exports.inserirResultadoConsulta = async (req, res) => {
   try {
-    const { id_consulta, motivo, observacoes, exames, diagnostico, sintomas } = req.body;
-
-    // Log para debug
-    console.log('Dados recebidos:', {
-      id_consulta,
-      motivo,
-      observacoes,
-      exames,
-      diagnostico,
-      sintomas
-    });
+    const { id_consulta } = req.params;
+    const { motivo, observacoes, sintomas, exames, diagnostico, receitas } = req.body;
 
     if (!id_consulta) {
       return res.status(400).json({
@@ -115,29 +102,6 @@ exports.inserirResultadoConsulta = async (req, res) => {
         message: 'ID da consulta é obrigatório'
       });
     }
-
-    // Validação mais robusta dos sintomas
-    let sintomasArray = [];
-    if (sintomas) {
-      if (Array.isArray(sintomas)) {
-        sintomasArray = sintomas;
-      } else if (typeof sintomas === 'object' && sintomas !== null) {
-        sintomasArray = Object.values(sintomas);
-      } else if (typeof sintomas === 'string') {
-        try {
-          const parsedSintomas = JSON.parse(sintomas);
-          sintomasArray = Array.isArray(parsedSintomas) ? parsedSintomas : [parsedSintomas];
-        } catch (e) {
-          sintomasArray = [sintomas];
-        }
-      }
-    }
-
-    // Log para debug após processamento
-    console.log('Sintomas processados:', sintomasArray);
-
-    // Garantir que exames seja um array válido
-    const examesArray = Array.isArray(exames) ? exames : [];
 
     await pool.query('BEGIN');
 
@@ -148,8 +112,8 @@ exports.inserirResultadoConsulta = async (req, res) => {
     );
 
     let resultadoConsulta;
+
     if (resultadoExistente.rows.length > 0) {
-      // Se existe, faz UPDATE
       resultadoConsulta = await pool.query(
         `UPDATE resultado_consulta 
          SET motivo = $1, 
@@ -159,22 +123,19 @@ exports.inserirResultadoConsulta = async (req, res) => {
              diagnostico = $5
          WHERE id_consulta = $6
          RETURNING id_consulta`,
-        [motivo, observacoes, sintomasArray, examesArray, diagnostico, id_consulta]
+        [motivo, observacoes, sintomas, exames, diagnostico, id_consulta]
       );
 
-      // Remove receitas antigas
       await pool.query('DELETE FROM receita WHERE id_consulta = $1', [id_consulta]);
     } else {
-      // Se não existe, faz INSERT
       resultadoConsulta = await pool.query(
         'INSERT INTO resultado_consulta (id_consulta, motivo, observacoes, sintomas, exames, diagnostico) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id_consulta',
-        [id_consulta, motivo, observacoes, sintomasArray, examesArray, diagnostico]
+        [id_consulta, motivo, observacoes, sintomas, exames, diagnostico]
       );
     }
 
-    // Se houver receitas, insere cada uma delas
-    if (req.body.receitas && req.body.receitas.length > 0) {
-      for (const receita of req.body.receitas) {
+    if (receitas && receitas.length > 0) {
+      for (const receita of receitas) {
         await pool.query(
           'INSERT INTO receita (id_consulta, medicamento, dosagem, frequencia, duracao, observacoes) VALUES ($1, $2, $3, $4, $5, $6)',
           [
@@ -221,8 +182,6 @@ exports.getDadosConsulta = async (req, res) => {
       });
     }
 
-    // Primeiro, busca os dados básicos da consulta com informações do médico e paciente
-    console.log('Buscando dados básicos da consulta...');
     const consultaResult = await pool.query(`
       SELECT 
         c.id,
@@ -230,14 +189,15 @@ exports.getDadosConsulta = async (req, res) => {
         im.especialidade,
         im.imagem_perfil as imagem_medico,
         iu.nome as nome_paciente,
-        iu.imagem_perfil as imagem_paciente
+        iu.imagem_perfil as imagem_paciente,
+        c.status,
+        c.data_hora,
+        c.valor
       FROM consulta c
       JOIN informacoes_medico im ON c.medico_id = im.medico_id
       JOIN informacoes_usuario iu ON c.usuario_id = iu.usuario_id
       WHERE c.id = $1
     `, [id_consulta]);
-
-    console.log('Resultado da busca básica:', consultaResult.rows);
 
     if (consultaResult.rows.length === 0) {
       console.log('Consulta não encontrada');
@@ -247,8 +207,6 @@ exports.getDadosConsulta = async (req, res) => {
       });
     }
 
-    // Depois, busca os dados do resultado da consulta
-    console.log('Buscando dados do resultado da consulta...');
     const result = await pool.query(`
       SELECT 
         rc.id_consulta,
@@ -267,9 +225,6 @@ exports.getDadosConsulta = async (req, res) => {
       WHERE rc.id_consulta = $1
     `, [id_consulta]);
 
-    console.log('Resultado da busca de dados:', result.rows);
-
-    // Processa os resultados para agrupar as receitas
     const dados = {
       id_consulta: id_consulta,
       medico: {
@@ -281,6 +236,9 @@ exports.getDadosConsulta = async (req, res) => {
         nome: consultaResult.rows[0].nome_paciente,
         imagem_perfil: consultaResult.rows[0].imagem_paciente
       },
+      status: consultaResult.rows[0].status,
+      data_hora: consultaResult.rows[0].data_hora,
+      valor: consultaResult.rows[0].valor,
       motivo: result.rows[0]?.motivo || null,
       observacoes: result.rows[0]?.observacoes || null,
       sintomas: result.rows[0]?.sintomas || [],
@@ -289,7 +247,6 @@ exports.getDadosConsulta = async (req, res) => {
       receitas: []
     };
 
-    // Adiciona as receitas se existirem
     if (result.rows.length > 0) {
       result.rows.forEach(row => {
         if (row.medicamento) {
@@ -303,8 +260,6 @@ exports.getDadosConsulta = async (req, res) => {
         }
       });
     }
-
-    console.log('Dados processados:', dados);
 
     res.status(200).json({
       success: true,
