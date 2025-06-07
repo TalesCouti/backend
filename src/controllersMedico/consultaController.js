@@ -225,6 +225,15 @@ exports.getDadosConsulta = async (req, res) => {
       WHERE rc.id_consulta = $1
     `, [id_consulta]);
 
+    // Busca os nomes dos sintomas
+    const sintomasResult = await pool.query(`
+      SELECT sintoma 
+      FROM sintomas 
+      WHERE id = ANY($1)
+    `, [result.rows[0]?.sintomas || []]);
+
+    const nomesSintomas = sintomasResult.rows.map(row => row.sintoma);
+
     const dados = {
       id_consulta: id_consulta,
       medico: {
@@ -241,7 +250,7 @@ exports.getDadosConsulta = async (req, res) => {
       valor: consultaResult.rows[0].valor,
       motivo: result.rows[0]?.motivo || null,
       observacoes: result.rows[0]?.observacoes || null,
-      sintomas: Array.isArray(result.rows[0]?.sintomas) ? result.rows[0].sintomas : [],
+      sintomas: nomesSintomas,
       exames: Array.isArray(result.rows[0]?.exames) ? result.rows[0].exames : [],
       diagnostico: result.rows[0]?.diagnostico || null,
       receitas: []
