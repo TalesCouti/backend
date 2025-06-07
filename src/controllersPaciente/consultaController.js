@@ -133,37 +133,32 @@ exports.getDadosConsulta = async (req, res) => {
 
     console.log('[getDadosConsulta] Buscando resultados da consulta');
     const result = await pool.query(`
+      WITH sintomas_nomes AS (
+        SELECT rc.id_consulta, array_agg(s.nome) as nomes_sintomas
+        FROM resultado_consulta rc
+        LEFT JOIN sintomas s ON s.id = ANY(rc.sintomas)
+        WHERE rc.id_consulta = $1
+        GROUP BY rc.id_consulta
+      )
       SELECT 
         rc.id_consulta,
         rc.motivo,
         rc.observacoes,
-        rc.sintomas,
+        sn.nomes_sintomas,
         rc.exames,
         rc.diagnostico,
         r.medicamento,
         r.dosagem,
         r.frequencia,
         r.duracao,
-        r.observacoes as observacoes_receita,
-        s.nome as nome_sintoma
+        r.observacoes as observacoes_receita
       FROM resultado_consulta rc
+      LEFT JOIN sintomas_nomes sn ON sn.id_consulta = rc.id_consulta
       LEFT JOIN receita r ON r.id_consulta = rc.id_consulta
-      LEFT JOIN sintomas s ON s.id = ANY(rc.sintomas)
       WHERE rc.id_consulta = $1
     `, [id_consulta]);
 
     console.log('[getDadosConsulta] Resultado encontrado:', result.rows);
-
-    // Agrupar os sintomas por consulta
-    const sintomasPorConsulta = {};
-    result.rows.forEach(row => {
-      if (row.nome_sintoma) {
-        if (!sintomasPorConsulta[row.id_consulta]) {
-          sintomasPorConsulta[row.id_consulta] = new Set();
-        }
-        sintomasPorConsulta[row.id_consulta].add(row.nome_sintoma);
-      }
-    });
 
     const dados = {
       ...consultaResult.rows[0],
@@ -178,7 +173,7 @@ exports.getDadosConsulta = async (req, res) => {
       },
       motivo: result.rows[0]?.motivo || null,
       observacoes: result.rows[0]?.observacoes || null,
-      sintomas: Array.from(sintomasPorConsulta[id_consulta] || []),
+      sintomas: result.rows[0]?.nomes_sintomas || [],
       exames: Array.isArray(result.rows[0]?.exames) ? result.rows[0].exames : [],
       diagnostico: result.rows[0]?.diagnostico || null,
       receitas: []
