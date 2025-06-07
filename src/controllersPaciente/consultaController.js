@@ -95,20 +95,23 @@ exports.inserirConsulta = async (req, res) => {
 exports.getDadosConsulta = async (req, res) => {
   try {
     const { id_consulta } = req.params;
-    console.log('Buscando dados da consulta:', id_consulta);
+    console.log('[getDadosConsulta] Iniciando busca dos dados da consulta:', id_consulta);
 
     if (!id_consulta) {
+      console.error('[getDadosConsulta] ID da consulta não fornecido');
       return res.status(400).json({
         success: false,
         message: 'ID da consulta é obrigatório'
       });
     }
 
+    console.log('[getDadosConsulta] Buscando informações básicas da consulta');
     const consultaResult = await pool.query(`
       SELECT 
         c.id,
         c.status,
         c.data_hora,
+        c.valor,
         im.nome as nome_medico,
         im.especialidade,
         im.imagem_perfil as imagem_medico,
@@ -121,13 +124,14 @@ exports.getDadosConsulta = async (req, res) => {
     `, [id_consulta]);
 
     if (consultaResult.rows.length === 0) {
-      console.log('Consulta não encontrada:', id_consulta);
+      console.error('[getDadosConsulta] Consulta não encontrada:', id_consulta);
       return res.status(404).json({
         success: false,
         message: 'Consulta não encontrada'
       });
     }
 
+    console.log('[getDadosConsulta] Buscando resultados da consulta');
     const result = await pool.query(`
       SELECT 
         rc.id_consulta,
@@ -146,14 +150,23 @@ exports.getDadosConsulta = async (req, res) => {
       WHERE rc.id_consulta = $1
     `, [id_consulta]);
 
-    console.log('Resultado encontrado:', result.rows);
+    console.log('[getDadosConsulta] Resultado encontrado:', result.rows);
 
     const dados = {
       ...consultaResult.rows[0],
+      medico: {
+        nome: consultaResult.rows[0].nome_medico,
+        especialidade: consultaResult.rows[0].especialidade,
+        imagem_perfil: consultaResult.rows[0].imagem_medico
+      },
+      paciente: {
+        nome: consultaResult.rows[0].nome_paciente,
+        imagem_perfil: consultaResult.rows[0].imagem_paciente
+      },
       motivo: result.rows[0]?.motivo || null,
       observacoes: result.rows[0]?.observacoes || null,
-      sintomas: result.rows[0]?.sintomas || [],
-      exames: result.rows[0]?.exames || [],
+      sintomas: Array.isArray(result.rows[0]?.sintomas) ? result.rows[0].sintomas : [],
+      exames: Array.isArray(result.rows[0]?.exames) ? result.rows[0].exames : [],
       diagnostico: result.rows[0]?.diagnostico || null,
       receitas: []
     };
@@ -172,7 +185,7 @@ exports.getDadosConsulta = async (req, res) => {
       });
     }
 
-    console.log('Dados processados:', dados);
+    console.log('[getDadosConsulta] Dados processados:', dados);
 
     res.status(200).json({
       success: true,
@@ -180,15 +193,15 @@ exports.getDadosConsulta = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Erro detalhado ao buscar dados da consulta:', {
+    console.error('[getDadosConsulta] Erro ao buscar dados da consulta:', {
       error: error.message,
-      stack: error.stack,
-      code: error.code
+      stack: error.stack
     });
+    
     res.status(500).json({
       success: false,
-      message: 'Falha ao buscar dados da consulta',
-      errorCode: 'DB_QUERY_ERROR'
+      message: 'Erro ao buscar dados da consulta',
+      error: error.message
     });
   }
 };
