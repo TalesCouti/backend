@@ -24,7 +24,7 @@ router.get('/sintomas', async (req, res) => {
 
 router.get('/medico', auth, getConsultaMedico);
 router.post('/medico', auth, inserirConsultaMedico);
-router.post('/resultado', auth, inserirResultadoConsulta);
+router.post('/resultado/:id_consulta', auth, inserirResultadoConsulta);
 router.get('/dados/:id_consulta', auth, getDadosConsulta);
 
 module.exports = router;
