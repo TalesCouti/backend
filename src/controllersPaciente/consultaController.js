@@ -154,6 +154,17 @@ exports.getDadosConsulta = async (req, res) => {
 
     console.log('[getDadosConsulta] Resultado encontrado:', result.rows);
 
+    // Agrupar os sintomas por consulta
+    const sintomasPorConsulta = {};
+    result.rows.forEach(row => {
+      if (row.nome_sintoma) {
+        if (!sintomasPorConsulta[row.id_consulta]) {
+          sintomasPorConsulta[row.id_consulta] = new Set();
+        }
+        sintomasPorConsulta[row.id_consulta].add(row.nome_sintoma);
+      }
+    });
+
     const dados = {
       ...consultaResult.rows[0],
       medico: {
@@ -167,7 +178,7 @@ exports.getDadosConsulta = async (req, res) => {
       },
       motivo: result.rows[0]?.motivo || null,
       observacoes: result.rows[0]?.observacoes || null,
-      sintomas: result.rows.map(row => row.nome_sintoma).filter(Boolean),
+      sintomas: Array.from(sintomasPorConsulta[id_consulta] || []),
       exames: Array.isArray(result.rows[0]?.exames) ? result.rows[0].exames : [],
       diagnostico: result.rows[0]?.diagnostico || null,
       receitas: []
