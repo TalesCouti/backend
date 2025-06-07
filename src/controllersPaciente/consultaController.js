@@ -144,9 +144,11 @@ exports.getDadosConsulta = async (req, res) => {
         r.dosagem,
         r.frequencia,
         r.duracao,
-        r.observacoes as observacoes_receita
+        r.observacoes as observacoes_receita,
+        s.nome as nome_sintoma
       FROM resultado_consulta rc
       LEFT JOIN receita r ON r.id_consulta = rc.id_consulta
+      LEFT JOIN sintomas s ON s.id = ANY(rc.sintomas)
       WHERE rc.id_consulta = $1
     `, [id_consulta]);
 
@@ -165,7 +167,7 @@ exports.getDadosConsulta = async (req, res) => {
       },
       motivo: result.rows[0]?.motivo || null,
       observacoes: result.rows[0]?.observacoes || null,
-      sintomas: Array.isArray(result.rows[0]?.sintomas) ? result.rows[0].sintomas : [],
+      sintomas: result.rows.map(row => row.nome_sintoma).filter(Boolean),
       exames: Array.isArray(result.rows[0]?.exames) ? result.rows[0].exames : [],
       diagnostico: result.rows[0]?.diagnostico || null,
       receitas: []
