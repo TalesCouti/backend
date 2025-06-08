@@ -100,8 +100,7 @@ exports.getMedico = async (req, res) => {
         e.logradouro, 
         e.numero, 
         e.complemento,
-        u.crm,
-        u.nfc_uid
+        u.crm
       FROM informacoes_medico i
       JOIN medico u ON i.medico_id = u.id
       JOIN endereco_medico e ON e.medico_id = u.id
