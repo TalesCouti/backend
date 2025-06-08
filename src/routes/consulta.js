@@ -6,7 +6,6 @@ const pool = require('../db/pool');
 const auth = require('../middleware/auth');
 
 router.get('/', auth, getConsulta);
-router.post('/consulta', auth, inserirConsulta);
 
 router.get('/sintomas', async (req, res) => {
   try {

@@ -41,57 +41,6 @@ exports.getConsulta = async (req, res) => {
     });
   }
 };
-
-exports.inserirConsulta = async (req, res) => {
-  try {
-    const requiredFields = ['medico_id', 'data_hora', 'status'];
-    const missingFields = requiredFields.filter(field => !req.body[field]);
-    
-    if (missingFields.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Campos obrigatórios faltando',
-        missingFields
-      });
-    }
-
-    const result = await pool.query(`
-      INSERT INTO consulta (usuario_id, medico_id, data_hora, status, valor)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING *
-    `, [
-      req.user.id,
-      req.body.medico_id,
-      req.body.data_hora,
-      req.body.status,
-      req.body.valor || 300.00
-    ]);
-
-    res.status(201).json({
-      success: true,
-      data: result.rows[0],
-      message: 'Consulta agendada com sucesso'
-    });
-
-  } catch (error) {
-    console.error('Erro em inserirConsulta:', error);
-
-    if (error.code === '23503') { 
-      return res.status(400).json({
-        success: false,
-        message: 'Médico não encontrado',
-        errorCode: 'DOCTOR_NOT_FOUND'
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      message: 'Falha ao agendar consulta',
-      errorCode: 'DB_INSERT_ERROR'
-    });
-  }
-};
-
 exports.getDadosConsulta = async (req, res) => {
   try {
     const { id_consulta } = req.params;
