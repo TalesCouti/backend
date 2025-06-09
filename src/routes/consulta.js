@@ -22,10 +22,14 @@ router.get('/sintomas', async (req, res) => {
 });
 router.post('/inserir-consulta', async (req, res) => {
   try {
-    const usuario_id = '044be79d-7a7f-4585-937e-08b54a75289e';
-    const medico_id = '9391a772-e3b1-4c65-8f02-3f877e064f30';
-    const status = 'realizada';
-    const data_hora = '2025-05-20 15:00:00';
+    const { usuario_id, medico_id, status, data_hora } = req.body;
+
+    if (!usuario_id || !medico_id || !status || !data_hora) {
+      return res.status(400).json({
+        success: false,
+        message: 'Campos obrigatórios: usuario_id, medico_id, status, data_hora'
+      });
+    }
 
     await pool.query(
       `INSERT INTO consulta (usuario_id, medico_id, status, data_hora) 
@@ -33,10 +37,10 @@ router.post('/inserir-consulta', async (req, res) => {
       [usuario_id, medico_id, status, data_hora]
     );
 
-    res.send('Consulta inserida com sucesso.');
+    res.json({ success: true, message: 'Consulta inserida com sucesso.' });
   } catch (err) {
     console.error('Erro no controller:', err);
-    res.status(500).send('Erro ao inserir consulta.');
+    res.status(500).json({ success: false, message: 'Erro ao inserir consulta.' });
   }
 });
 
