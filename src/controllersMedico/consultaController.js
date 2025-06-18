@@ -12,7 +12,7 @@ exports.getConsultaMedico = async (req, res) => {
 
     const result = await pool.query(`
       SELECT 
-      c.id,
+      c.consulta_id,
       iu.nome,
       iu.imagem_perfil,
       c.status,
@@ -133,7 +133,7 @@ exports.getDadosConsulta = async (req, res) => {
 
     const consultaResult = await pool.query(`
       SELECT 
-        c.id,
+        c.consulta_id,
         im.nome as nome_medico,
         im.especialidade,
         im.imagem_perfil as imagem_medico,
@@ -145,7 +145,7 @@ exports.getDadosConsulta = async (req, res) => {
       FROM consulta c
       JOIN informacoes_medico im ON c.medico_id = im.medico_id
       JOIN informacoes_usuario iu ON c.usuario_id = iu.usuario_id
-      WHERE c.id = $1
+      WHERE c.consulta_id = $1
     `, [id_consulta]);
 
     if (consultaResult.rows.length === 0) {

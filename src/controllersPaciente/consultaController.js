@@ -12,7 +12,7 @@ exports.getConsulta = async (req, res) => {
 
     const result = await pool.query(`
       SELECT 
-      c.id,
+      c.consulta_id,
       im.nome,
       im.especialidade,
       im.imagem_perfil,
@@ -57,7 +57,7 @@ exports.getDadosConsulta = async (req, res) => {
     console.log('[getDadosConsulta] Buscando informações básicas da consulta');
     const consultaResult = await pool.query(`
       SELECT 
-        c.id,
+        c.consulta_id,
         c.status,
         c.data_hora,
         c.valor,
@@ -69,11 +69,11 @@ exports.getDadosConsulta = async (req, res) => {
       FROM consulta c
       JOIN informacoes_medico im ON c.medico_id = im.medico_id
       JOIN informacoes_usuario iu ON c.usuario_id = iu.usuario_id
-      WHERE c.id = $1
-    `, [id_consulta]);
+      WHERE c.consulta_id = $1
+    `, [consulta_id]);
 
     if (consultaResult.rows.length === 0) {
-      console.error('[getDadosConsulta] Consulta não encontrada:', id_consulta);
+      console.error('[getDadosConsulta] Consulta não encontrada:', consulta_id);
       return res.status(404).json({
         success: false,
         message: 'Consulta não encontrada'
@@ -85,12 +85,11 @@ exports.getDadosConsulta = async (req, res) => {
       WITH sintomas_nomes AS (
         SELECT rc.id_consulta, array_agg(s.nome) as nomes_sintomas
         FROM resultado_consulta rc
-        LEFT JOIN sintomas s ON s.id = ANY(rc.sintomas)
-        WHERE rc.id_consulta = $1
-        GROUP BY rc.id_consulta
-      )
+        LEFT JOIN sintomas s ON s.consulta_id = ANY(rc.sintomas)
+        WHERE rc.consulta_id = $1
+        GROUP BY rc.consulta_id
       SELECT 
-        rc.id_consulta,
+        rc.consulta_id,
         rc.motivo,
         rc.observacoes,
         sn.nomes_sintomas,
