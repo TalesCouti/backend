@@ -24,21 +24,20 @@ const { nanoid } = require('nanoid');
 
 router.post('/inserir-consulta', async (req, res) => {
   try {
-    const { usuario_id, medico_id, status, data_hora } = req.body;
+    const { usuario_id, medico_id, status, data_hora, valor} = req.body;
 
     if (!usuario_id || !medico_id || !status || !data_hora) {
       return res.status(400).json({
         success: false,
-        message: 'Campos obrigatórios: usuario_id, medico_id, status, data_hora'
+        message: 'Campos obrigatórios: usuario_id, medico_id, status, data_hora, valor'
       });
     }
 
-    const id = nanoid(10); // Gera um ID único de 10 caracteres
-
+    const id = nanoid(10); 
     await pool.query(
-      `INSERT INTO consulta (id, usuario_id, medico_id, status, data_hora) 
-       VALUES ($1, $2, $3, $4, $5)`,
-      [id, usuario_id, medico_id, status, data_hora]
+      `INSERT INTO consulta (id, usuario_id, medico_id, status, data_hora, valor) 
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [id, usuario_id, medico_id, status, data_hora, valor]
     );
 
     res.json({ success: true, message: 'Consulta inserida com sucesso.', id });
