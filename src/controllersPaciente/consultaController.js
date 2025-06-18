@@ -43,10 +43,10 @@ exports.getConsulta = async (req, res) => {
 };
 exports.getDadosConsulta = async (req, res) => {
   try {
-    const { id_consulta } = req.params;
-    console.log('[getDadosConsulta] Iniciando busca dos dados da consulta:', id_consulta);
+    const { consulta_id } = req.params;
+    console.log('[getDadosConsulta] Iniciando busca dos dados da consulta:', consulta_id);
 
-    if (!id_consulta) {
+    if (!consulta_id) {
       console.error('[getDadosConsulta] ID da consulta não fornecido');
       return res.status(400).json({
         success: false,
@@ -83,7 +83,7 @@ exports.getDadosConsulta = async (req, res) => {
     console.log('[getDadosConsulta] Buscando resultados da consulta');
     const result = await pool.query(`
       WITH sintomas_nomes AS (
-        SELECT rc.id_consulta, array_agg(s.nome) as nomes_sintomas
+        SELECT rc.consulta_id, array_agg(s.nome) as nomes_sintomas
         FROM resultado_consulta rc
         LEFT JOIN sintomas s ON s.consulta_id = ANY(rc.sintomas)
         WHERE rc.consulta_id = $1
@@ -101,10 +101,10 @@ exports.getDadosConsulta = async (req, res) => {
         r.duracao,
         r.observacoes as observacoes_receita
       FROM resultado_consulta rc
-      LEFT JOIN sintomas_nomes sn ON sn.id_consulta = rc.id_consulta
-      LEFT JOIN receita r ON r.id_consulta = rc.id_consulta
-      WHERE rc.id_consulta = $1
-    `, [id_consulta]);
+      LEFT JOIN sintomas_nomes sn ON sn.consulta_id = rc.consulta_id
+      LEFT JOIN receita r ON r.consulta_id = rc.consulta_id
+      WHERE rc.consulta_id = $1
+    `, [consulta_id]);
 
     console.log('[getDadosConsulta] Resultado encontrado:', result.rows);
 

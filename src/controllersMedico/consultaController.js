@@ -42,10 +42,10 @@ exports.getConsultaMedico = async (req, res) => {
 };
 exports.inserirResultadoConsulta = async (req, res) => {
   try {
-    const { id_consulta } = req.params;
+    const { consulta_id } = req.params;
     const { motivo, observacoes, sintomas, exames, diagnostico, receitas } = req.body;
 
-    if (!id_consulta) {
+    if (!consulta_id) {
       return res.status(400).json({
         success: false,
         message: 'ID da consulta é obrigatório'
@@ -56,8 +56,8 @@ exports.inserirResultadoConsulta = async (req, res) => {
 
     // Verifica se já existe um resultado para esta consulta
     const resultadoExistente = await pool.query(
-      'SELECT id_consulta FROM resultado_consulta WHERE id_consulta = $1',
-      [id_consulta]
+      'SELECT consulta_id FROM resultado_consulta WHERE consulta_id = $1',
+      [consulta_id]
     );
 
     let resultadoConsulta;
@@ -70,25 +70,25 @@ exports.inserirResultadoConsulta = async (req, res) => {
              sintomas = $3, 
              exames = $4, 
              diagnostico = $5
-         WHERE id_consulta = $6
-         RETURNING id_consulta`,
-        [motivo, observacoes, sintomas, exames, diagnostico, id_consulta]
+         WHERE consulta_id = $6
+         RETURNING consulta_id`,
+        [motivo, observacoes, sintomas, exames, diagnostico, consulta_id]
       );
 
-      await pool.query('DELETE FROM receita WHERE id_consulta = $1', [id_consulta]);
+      await pool.query('DELETE FROM receita WHERE consulta_id = $1', [consulta_id]);
     } else {
       resultadoConsulta = await pool.query(
-        'INSERT INTO resultado_consulta (id_consulta, motivo, observacoes, sintomas, exames, diagnostico) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id_consulta',
-        [id_consulta, motivo, observacoes, sintomas, exames, diagnostico]
+        'INSERT INTO resultado_consulta (consulta_id, motivo, observacoes, sintomas, exames, diagnostico) VALUES ($1, $2, $3, $4, $5, $6) RETURNING consulta_id',
+        [consulta_id, motivo, observacoes, sintomas, exames, diagnostico]
       );
     }
 
     if (receitas && receitas.length > 0) {
       for (const receita of receitas) {
         await pool.query(
-          'INSERT INTO receita (id_consulta, medicamento, dosagem, frequencia, duracao, observacoes) VALUES ($1, $2, $3, $4, $5, $6)',
+          'INSERT INTO receita (consulta_id, medicamento, dosagem, frequencia, duracao, observacoes) VALUES ($1, $2, $3, $4, $5, $6)',
           [
-            resultadoConsulta.rows[0].id_consulta,
+            resultadoConsulta.rows[0].consulta_id,
             receita.medicamento,
             receita.dosagem,
             receita.frequencia,
@@ -119,11 +119,11 @@ exports.inserirResultadoConsulta = async (req, res) => {
 
 exports.getDadosConsulta = async (req, res) => {
   try {
-    const { id_consulta } = req.params;
-    console.log('Buscando dados da consulta:', id_consulta);
+    const { consulta_id } = req.params;
+    console.log('Buscando dados da consulta:', consulta_id);
     console.log('Usuário autenticado:', req.user?.id);
 
-    if (!id_consulta) {
+    if (!consulta_id) {
       console.log('ID da consulta não fornecido');
       return res.status(400).json({
         success: false,
@@ -146,7 +146,7 @@ exports.getDadosConsulta = async (req, res) => {
       JOIN informacoes_medico im ON c.medico_id = im.medico_id
       JOIN informacoes_usuario iu ON c.usuario_id = iu.usuario_id
       WHERE c.consulta_id = $1
-    `, [id_consulta]);
+    `, [consulta_id]);
 
     if (consultaResult.rows.length === 0) {
       console.log('Consulta não encontrada');
@@ -158,7 +158,7 @@ exports.getDadosConsulta = async (req, res) => {
 
     const result = await pool.query(`
       SELECT 
-        rc.id_consulta,
+        rc.consulta_id,
         rc.motivo,
         rc.observacoes,
         rc.sintomas,
@@ -170,9 +170,9 @@ exports.getDadosConsulta = async (req, res) => {
         r.duracao,
         r.observacoes as observacoes_receita
       FROM resultado_consulta rc
-      LEFT JOIN receita r ON r.id_consulta = rc.id_consulta
-      WHERE rc.id_consulta = $1
-    `, [id_consulta]);
+      LEFT JOIN receita r ON r.consulta_id = rc.consulta_id
+      WHERE rc.consulta_id = $1
+    `, [consulta_id]);
 
     // Busca os nomes dos sintomas
     const sintomasResult = await pool.query(`
@@ -184,7 +184,7 @@ exports.getDadosConsulta = async (req, res) => {
     const nomesSintomas = sintomasResult.rows.map(row => row.sintoma);
 
     const dados = {
-      id_consulta: id_consulta,
+      consulta_id: consulta_id,
       medico: {
         nome: consultaResult.rows[0].nome_medico,
         especialidade: consultaResult.rows[0].especialidade,

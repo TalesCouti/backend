@@ -33,14 +33,14 @@ router.post('/inserir-consulta', async (req, res) => {
       });
     }
 
-    const id = nanoid(10); 
+    const consulta_id = nanoid(10); 
     await pool.query(
-      `INSERT INTO consulta (id, usuario_id, medico_id, status, data_hora, valor) 
+      `INSERT INTO consulta (consulta_id, usuario_id, medico_id, status, data_hora, valor) 
        VALUES ($1, $2, $3, $4, $5, $6)`,
-      [id, usuario_id, medico_id, status, data_hora, valor]
+      [consulta_id, usuario_id, medico_id, status, data_hora, valor]
     );
 
-    res.json({ success: true, message: 'Consulta inserida com sucesso.', id });
+    res.json({ success: true, message: 'Consulta inserida com sucesso.', consulta_id });
   } catch (err) {
     console.error('Erro no controller:', err);
     res.status(500).json({ success: false, message: 'Erro ao inserir consulta.' });
@@ -48,7 +48,7 @@ router.post('/inserir-consulta', async (req, res) => {
 });
 
 router.get('/medico', auth, getConsultaMedico);
-router.post('/resultado/:id_consulta', auth, inserirResultadoConsulta);
-router.get('/dados/:id_consulta', auth, getDadosConsulta);
+router.post('/resultado/:consulta_id', auth, inserirResultadoConsulta);
+router.get('/dados/:consulta_id', auth, getDadosConsulta);
 
 module.exports = router;
