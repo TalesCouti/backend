@@ -20,6 +20,8 @@ router.get('/sintomas', async (req, res) => {
     });
   }
 });
+const { nanoid } = require('nanoid');
+
 router.post('/inserir-consulta', async (req, res) => {
   try {
     const { usuario_id, medico_id, status, data_hora } = req.body;
@@ -31,13 +33,15 @@ router.post('/inserir-consulta', async (req, res) => {
       });
     }
 
+    const id = nanoid(10); // Gera um ID único de 10 caracteres
+
     await pool.query(
-      `INSERT INTO consulta (usuario_id, medico_id, status, data_hora) 
-       VALUES ($1, $2, $3, $4)`,
-      [usuario_id, medico_id, status, data_hora]
+      `INSERT INTO consulta (id, usuario_id, medico_id, status, data_hora) 
+       VALUES ($1, $2, $3, $4, $5)`,
+      [id, usuario_id, medico_id, status, data_hora]
     );
 
-    res.json({ success: true, message: 'Consulta inserida com sucesso.' });
+    res.json({ success: true, message: 'Consulta inserida com sucesso.', id });
   } catch (err) {
     console.error('Erro no controller:', err);
     res.status(500).json({ success: false, message: 'Erro ao inserir consulta.' });
