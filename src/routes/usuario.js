@@ -9,5 +9,6 @@ router.post('/loginNfc', usuarioController.loginNfc);
 router.post('/cadastroNfc', auth, usuarioController.cadastroNFC);
 router.delete('/removerNFC', auth, usuarioController.removerNFC);
 router.get('/', auth, usuarioController.getUsuario);
+router.get('/cpf/:cpf', auth, usuarioController.getUsuarioPorCPF);
 
 module.exports = router;

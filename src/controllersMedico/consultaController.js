@@ -1,4 +1,54 @@
 const pool = require('../db/pool');
+const { nanoid } = require('nanoid');
+
+exports.CriarConsulta = async (req, res) => {
+  try {
+    const { cpf, medico_id, status, data_hora, valor } = req.body;
+    
+    // Validar se o CPF foi fornecido
+    if (!cpf) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'CPF do paciente é obrigatório' 
+      });
+    }
+
+    // Buscar o usuario_id pelo CPF
+    const usuarioResult = await pool.query(
+      'SELECT id FROM usuario WHERE cpf = $1',
+      [cpf]
+    );
+
+    if (usuarioResult.rows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Paciente não encontrado com este CPF' 
+      });
+    }
+
+    const usuario_id = usuarioResult.rows[0].id;
+    const consulta_id = nanoid(10);
+    
+    await pool.query(
+      `INSERT INTO consulta (consulta_id, usuario_id, medico_id, status, data_hora, valor) 
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [consulta_id, usuario_id, medico_id, status, data_hora, valor]
+    );
+    
+    res.status(201).json({ 
+      success: true, 
+      message: 'Consulta criada com sucesso.', 
+      consulta_id 
+    });
+  } catch (error) {
+    console.error('Erro ao criar consulta:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Erro ao criar consulta',
+      error: error.message 
+    });
+  }
+};
 
 exports.getConsultaMedico = async (req, res) => {
   try {

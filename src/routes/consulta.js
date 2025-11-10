@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getConsulta } = require('../controllersPaciente/consultaController');
-const { getConsultaMedico,inserirResultadoConsulta, getDadosConsulta } = require('../controllersMedico/consultaController');
+const { getConsultaMedico, inserirResultadoConsulta, getDadosConsulta, CriarConsulta } = require('../controllersMedico/consultaController');
 const pool = require('../db/pool');
 const auth = require('../middleware/auth');
 
@@ -48,6 +48,7 @@ router.post('/inserir-consulta', async (req, res) => {
 });
 
 router.get('/medico', auth, getConsultaMedico);
+router.post('/criar', auth, CriarConsulta);
 router.post('/resultado/:consulta_id', auth, inserirResultadoConsulta);
 router.get('/dados/:consulta_id', auth, getDadosConsulta);
 

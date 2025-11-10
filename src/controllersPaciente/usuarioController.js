@@ -213,3 +213,50 @@ exports.getUsuario = async (req, res) => {
     res.status(500).json({ message: 'Erro ao buscar informações do usuário' });
   }
 };
+
+exports.getUsuarioPorCPF = async (req, res) => {
+  const { cpf } = req.params;
+
+  if (!cpf) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'CPF é obrigatório' 
+    });
+  }
+
+  try {
+    const usuarioResult = await pool.query(`
+      SELECT 
+        u.id,
+        u.cpf,
+        i.nome, 
+        i.email, 
+        i.telefone, 
+        i.data_nascimento, 
+        i.imagem_perfil
+      FROM usuario u
+      LEFT JOIN informacoes_usuario i ON i.usuario_id = u.id
+      WHERE u.cpf = $1
+    `, [cpf]);
+
+    if (usuarioResult.rows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Paciente não encontrado com este CPF' 
+      });
+    }
+
+    res.json({
+      success: true,
+      data: usuarioResult.rows[0]
+    });
+    
+  } catch (error) {
+    console.error('Erro ao buscar usuário por CPF:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Erro ao buscar informações do usuário',
+      error: error.message 
+    });
+  }
+};

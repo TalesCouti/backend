@@ -6,5 +6,6 @@ const auth = require('../middleware/auth');
 router.post('/login', medicoController.login);
 router.post('/cadastro', medicoController.cadastro);
 router.get('/', auth, medicoController.getMedico);
+router.get('/dados', auth, medicoController.getMedico);
 
 module.exports = router;
